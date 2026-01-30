@@ -1,0 +1,4 @@
+../Core/Src/shiftreg.c:4:6:shiftByteEN	2
+../Core/Src/shiftreg.c:21:6:shiftByteDIR	2
+../Core/Src/shiftreg.c:38:6:clearEN	1
+../Core/Src/shiftreg.c:46:6:clearDIR	1
