@@ -18,3 +18,9 @@ void CANfilter(void)
 
   HAL_CAN_ConfigFilter(&hcan, &filter);
 }
+
+int transmitSPI1(uint8_t* data, uint16_t len) {
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, data, len, SPI_TIMEOUT);
+	uint8_t ok = (status == HAL_OK) ? 1 : 0;
+	return ok;
+}

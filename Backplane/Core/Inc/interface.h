@@ -1,7 +1,6 @@
 #pragma once
 #include "main.h"
-#include "can.h"
 
 void setCS(uint8_t line);
 void resetCS(void);
-void CANfilter(void);
+int transmitSPI1(uint8_t card, uint8_t* data, uint16_t len);

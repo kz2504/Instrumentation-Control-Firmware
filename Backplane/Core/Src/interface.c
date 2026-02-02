@@ -1,6 +1,8 @@
 #include "main.h"
 #include "interface.h"
-#include "can.h"
+#include "spi.h"
+
+uint8_t SPI_TIMEOUT = 100;
 
 void setCS(uint8_t line) {
 	line = 7u - line;
@@ -18,19 +20,13 @@ void resetCS(void) {
 	HAL_GPIO_WritePin(EN_CS_GPIO_Port, EN_CS_Pin, GPIO_PIN_SET);
 }
 
-void CANfilter(void)
-{
-  CAN_FilterTypeDef filter = {0};
-
-  filter.FilterBank = 0;
-  filter.FilterMode = CAN_FILTERMODE_IDMASK;
-  filter.FilterScale = CAN_FILTERSCALE_32BIT;
-  filter.FilterIdHigh = 0x0000;
-  filter.FilterIdLow  = 0x0000;
-  filter.FilterMaskIdHigh = 0x0000;
-  filter.FilterMaskIdLow  = 0x0000;
-  filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-  filter.FilterActivation = ENABLE;
-
-  HAL_CAN_ConfigFilter(&hcan, &filter);
+int transmitSPI1(uint8_t card, uint8_t* data, uint16_t len) {
+	setCS(card);
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, data, len, SPI_TIMEOUT);
+	resetCS();
+	uint8_t ok = (status == HAL_OK) ? 1 : 0;
+	return ok;
 }
+
+
+

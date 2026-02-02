@@ -18,11 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "can.h"
 #include "rtc.h"
 #include "spi.h"
 #include "usart.h"
-#include "usb.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -91,22 +90,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_CAN_Init();
   MX_USART1_Init();
   MX_USART2_Init();
-  MX_USB_PCD_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  CANfilter();
-  HAL_CAN_Start(&hcan);
-  CAN_TxHeaderTypeDef txHeader;
-  uint32_t txMailbox;
-  uint8_t txData[8] = {0xA5};
-  txHeader.IDE = CAN_ID_STD;
-  txHeader.StdId = 0x123;
-  txHeader.RTR = CAN_RTR_DATA;
-  txHeader.DLC = 1;
   resetCS();
   /* USER CODE END 2 */
 
@@ -115,9 +104,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_CAN_AddTxMessage(&hcan, &txHeader, txData, &txMailbox);
-	  HAL_Delay(200);
+
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }

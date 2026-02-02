@@ -104,11 +104,6 @@ int main(void)
   writeDAC(0x6, 4.85, 3.0, 0x00);
   writeDAC(0x7, 4.85, 3.0, 0x00);
 
-  CANfilter();
-  HAL_CAN_Start(&hcan);
-  CAN_RxHeaderTypeDef rxHeader;
-  uint8_t rxData[8];
-
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
