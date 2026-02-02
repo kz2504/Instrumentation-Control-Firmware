@@ -1,4 +1,5 @@
-../Core/Src/shiftreg.c:4:6:shiftByteEN	24	static
-../Core/Src/shiftreg.c:21:6:shiftByteDIR	24	static
-../Core/Src/shiftreg.c:38:6:clearEN	8	static
-../Core/Src/shiftreg.c:46:6:clearDIR	8	static
+../Core/Src/shiftreg.c:4:16:reverse8	16	static
+../Core/Src/shiftreg.c:12:6:shiftByteEN	24	static
+../Core/Src/shiftreg.c:31:6:shiftByteDIR	24	static
+../Core/Src/shiftreg.c:50:6:clearEN	8	static
+../Core/Src/shiftreg.c:58:6:clearDIR	8	static

@@ -28,6 +28,7 @@
 #include "shiftreg.h"
 #include "DAC.h"
 #include "interface.h"
+#include "schedule.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,18 +94,11 @@ int main(void)
   MX_SPI1_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-  shiftByteEN(0xFF);
-  shiftByteDIR(0xFF);
-  writeDAC(0x0, 4.85, 3.0, 0x00);
-  writeDAC(0x1, 4.85, 3.0, 0x00);
-  writeDAC(0x2, 4.85, 3.0, 0x00);
-  writeDAC(0x3, 4.85, 3.0, 0x00);
-  writeDAC(0x4, 4.85, 3.0, 0x00);
-  writeDAC(0x5, 4.85, 3.0, 0x00);
-  writeDAC(0x6, 4.85, 3.0, 0x00);
-  writeDAC(0x7, 4.85, 3.0, 0x00);
+  clearEN();
+  clearDIR();
 
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  pump_spi_nack_init();
+  schedule_clear();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -112,22 +106,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
-	  if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) > 0)
-		{
-		  if (HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &rxHeader, rxData) == HAL_OK)
-		  {
-			if (rxHeader.IDE == CAN_ID_STD &&
-				rxHeader.StdId == 0x123 &&
-				rxHeader.DLC  >= 1 &&
-				rxData[0] == 0xA5)
-			{
-			  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);   // LED ON
-			  // If your LED is active-low (PC13 on many boards), use GPIO_PIN_RESET instead.
-			}
-		  }
-	  }
+	  pump_spi_nack_poll();
+	  schedule_tick(HAL_GetTick());
   }
   /* USER CODE END 3 */
 }

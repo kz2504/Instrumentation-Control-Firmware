@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "interface.h"
+#include "schedule.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +48,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,6 +58,20 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int miso_read_constant_test(uint8_t card)
+{
+    uint8_t tx[2] = {0x00, 0x00};   // clock 2 bytes
+    uint8_t rx[2] = {0x00, 0x00};
+
+    setCS(card);
+    HAL_StatusTypeDef st = HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
+    resetCS(); // or resetCS(); depending on your function signature
+
+    if (st != HAL_OK) return 0;
+
+    // Check 2nd byte (pipeline)
+    return (rx[1] == 0xA5) ? 1 : 0;
+}
 
 /* USER CODE END 0 */
 
@@ -65,6 +79,7 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
+
 int main(void)
 {
 
@@ -97,6 +112,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   resetCS();
+  uint8_t card = 1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,9 +120,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
-
+	  usb_protocol_poll(card);
   }
   /* USER CODE END 3 */
 }

@@ -60,8 +60,8 @@ all: main-build
 main-build: Pump\ Control\ Card.elf secondary-outputs
 
 # Tool invocations
-Pump\ Control\ Card.elf Pump\ Control\ Card.map: $(OBJS) $(USER_OBJS) C:\Users\Frank\Documents\STM32\ Firmware\Pump\ Control\ Card\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Pump Control Card.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Frank\Documents\STM32 Firmware\Pump Control Card\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Pump Control Card.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Pump\ Control\ Card.elf Pump\ Control\ Card.map: $(OBJS) $(USER_OBJS) C:\Users\Frank\Documents\STM32\ Firmware\Instrumentation-Control\Pump\ Control\ Card\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Pump Control Card.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Frank\Documents\STM32 Firmware\Instrumentation-Control\Pump Control Card\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Pump Control Card.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

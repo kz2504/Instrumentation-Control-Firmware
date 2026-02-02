@@ -1,5 +1,6 @@
-Core/Src/interface.o: ../Core/Src/interface.c ../Core/Inc/interface.h \
- ../Core/Inc/main.h ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
+Core/Src/schedule.o: ../Core/Src/schedule.c ../Core/Inc/schedule.h \
+ ../Core/Inc/shiftreg.h ../Core/Inc/main.h \
+ ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_def.h \
@@ -25,8 +26,9 @@ Core/Src/interface.o: ../Core/Src/interface.c ../Core/Inc/interface.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h \
- ../Core/Inc/spi.h ../Core/Inc/main.h ../Core/Inc/schedule.h
-../Core/Inc/interface.h:
+ ../Core/Inc/DAC.h
+../Core/Inc/schedule.h:
+../Core/Inc/shiftreg.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -54,6 +56,4 @@ Core/Src/interface.o: ../Core/Src/interface.c ../Core/Inc/interface.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h:
-../Core/Inc/spi.h:
-../Core/Inc/main.h:
-../Core/Inc/schedule.h:
+../Core/Inc/DAC.h:
