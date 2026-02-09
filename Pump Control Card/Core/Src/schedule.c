@@ -3,9 +3,9 @@
 #include "shiftreg.h"
 #include "DAC.h"
 
-#define AVDD_VOLTS 4.85f
+#define AVDD_VOLTS 4.87f
 #define V_MIN_VOLTS 0.00f
-#define V_MAX_VOLTS 4.80f
+#define V_MAX_VOLTS 4.70f
 
 #define FLOW_AT_VMIN_ULPM 0.0f
 #define FLOW_AT_VMAX_ULPM 1000.0f
@@ -24,14 +24,14 @@ volatile uint32_t g_sched_block_start_ms = 0;
 volatile uint32_t g_sched_blocks_loaded = 0;
 
 static void apply_block(const block_msg_t *b) {
+	shiftByteEN(0x00);
 	shiftByteDIR(b->dir_mask);
-	shiftByteEN(b->state_mask);
-
+	shiftByteDIR(b->dir_mask);
     for (uint8_t i = 0; i < NUM_PUMPS; i++) {
         pump_set_flow(i, b->flow[i]);
     }
-
-    //Apply stim
+    shiftByteEN(b->state_mask);
+    shiftByteEN(b->state_mask);
     hw_stim_set(b->stim_on, b->stim_freq_x100, b->stim_duty_x10);
 }
 
@@ -141,7 +141,8 @@ static float flow_to_vout(float flow_ulpm)
 
 static void pump_set_flow(uint8_t pump_i, uint16_t flow_ulpm)
 {
-    float vout = flow_to_vout(flow_ulpm);
+    float vout = 0.001232f * flow_ulpm - 0.034f;
+    vout = clampf(vout, 0.034f, AVDD_VOLTS);
     writeDAC(pump_i, AVDD_VOLTS, vout, DAC_MODE_DEFAULT);
 }
 

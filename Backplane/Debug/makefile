@@ -64,8 +64,8 @@ all: main-build
 main-build: Backplane.elf secondary-outputs
 
 # Tool invocations
-Backplane.elf Backplane.map: $(OBJS) $(USER_OBJS) C:\Users\Frank\Documents\STM32\ Firmware\Instrumentation-Control\Backplane\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Backplane.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Frank\Documents\STM32 Firmware\Instrumentation-Control\Backplane\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Backplane.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Backplane.elf Backplane.map: $(OBJS) $(USER_OBJS) C:\Users\NectowLab\Documents\Instrumentation-Control-Firmware\Backplane\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Backplane.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\NectowLab\Documents\Instrumentation-Control-Firmware\Backplane\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Backplane.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

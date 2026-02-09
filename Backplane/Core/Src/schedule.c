@@ -12,6 +12,30 @@
 volatile uint16_t head = 0;
 volatile uint16_t tail = 0;
 
+//Temporary triggering
+//Start
+static volatile uint8_t  g_pa0_pulse_active = 0;
+static volatile uint32_t g_pa0_pulse_start_ms = 0;
+
+static void pa0_pulse_start_1s(void)
+{
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+    g_pa0_pulse_active = 1;
+    g_pa0_pulse_start_ms = HAL_GetTick();
+}
+
+static void pa0_pulse_tick(void)
+{
+    if (!g_pa0_pulse_active) return;
+
+    uint32_t now = HAL_GetTick();
+    if ((uint32_t)(now - g_pa0_pulse_start_ms) >= 1000u) {
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+        g_pa0_pulse_active = 0;
+    }
+}
+//End
+
 uint8_t buffer[BUFFER_SIZE];
 
 uint16_t get_next(uint16_t i) {
@@ -194,6 +218,7 @@ void handle_line(char *line, uint8_t card) {
         if (sd > 65535.0f) sd = 65535.0f;
         msg.stim_duty_x10 = (uint16_t)(sd + 0.5f);
 
+        pa0_pulse_start_1s(); //Trigger
         int ok = spi_send_block(card, &msg, sizeof(msg));
         usb_sendf(ok ? "OK BLOCK %ld" : "ERR BLOCK SPI %ld", (long)idx_i);
         return;
@@ -203,6 +228,8 @@ void handle_line(char *line, uint8_t card) {
 }
 
 void usb_protocol_poll(uint8_t card) {
+	pa0_pulse_tick(); //Trigger
+
     static char line[LINE_MAX];
     static uint16_t n = 0;
     static uint8_t discarding = 0;

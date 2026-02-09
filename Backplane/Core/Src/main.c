@@ -79,7 +79,6 @@ int miso_read_constant_test(uint8_t card)
   * @brief  The application entry point.
   * @retval int
   */
-
 int main(void)
 {
 
@@ -120,6 +119,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
 	  usb_protocol_poll(card);
   }
