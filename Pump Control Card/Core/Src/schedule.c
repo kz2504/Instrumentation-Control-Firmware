@@ -5,14 +5,19 @@
 
 #define AVDD_VOLTS 4.87f
 #define V_MIN_VOLTS 0.00f
-#define V_MAX_VOLTS 4.70f
 
-#define FLOW_AT_VMIN_ULPM 0.0f
-#define FLOW_AT_VMAX_ULPM 1000.0f
 #define DAC_MODE_DEFAULT 0
+
+#define FLOW_TO_VOUT_DEFAULT_GAIN   0.001232f
+#define FLOW_TO_VOUT_DEFAULT_OFFSET (-0.034f)
+
+static float g_flow_to_vout_gain[NUM_PUMPS];
+static float g_flow_to_vout_offset[NUM_PUMPS];
+static uint8_t g_flow_calibration_initialized = 0;
 
 static void pump_set_flow(uint8_t i, uint16_t flow);
 static void hw_stim_set(uint8_t on, uint16_t freq_x100, uint16_t duty_x10);
+static void flow_calibration_init_defaults(void);
 
 static block_msg_t g_blocks[MAX_BLOCKS];
 static uint8_t g_block_valid[MAX_BLOCKS];
@@ -37,6 +42,8 @@ static void apply_block(const block_msg_t *b) {
 
 void schedule_clear(void)
 {
+    flow_calibration_init_defaults();
+
     memset(g_block_valid, 0, sizeof(g_block_valid));
     memset(g_blocks, 0, sizeof(g_blocks));
     g_sched_blocks_loaded = 0;
@@ -126,22 +133,44 @@ static float clampf(float x, float lo, float hi)
     return x;
 }
 
-static float flow_to_vout(float flow_ulpm)
+static void flow_calibration_init_defaults(void)
 {
-    const float dV = (V_MAX_VOLTS - V_MIN_VOLTS);
-    const float dF = (FLOW_AT_VMAX_ULPM - FLOW_AT_VMIN_ULPM);
-
-    if (dV <= 0.0f || dF <= 0.0f) {
-        return V_MIN_VOLTS;
+    if (g_flow_calibration_initialized) {
+        return;
     }
 
-    float v = V_MIN_VOLTS + (flow_ulpm - FLOW_AT_VMIN_ULPM) * (dV / dF);
-    return clampf(v, V_MIN_VOLTS, V_MAX_VOLTS);
+    for (uint8_t i = 0; i < NUM_PUMPS; i++) {
+        g_flow_to_vout_gain[i] = FLOW_TO_VOUT_DEFAULT_GAIN;
+        g_flow_to_vout_offset[i] = FLOW_TO_VOUT_DEFAULT_OFFSET;
+    }
+
+    /*
+     * Per-pump calibration table (flow_ulpm -> Vout):
+     *   Vout = gain[pump_i] * flow_ulpm + offset[pump_i]
+     *
+     * Replace these defaults with measured coefficients/offsets for each pump.
+     */
+    if (NUM_PUMPS > 0u) { g_flow_to_vout_gain[0] = 0.001232f; g_flow_to_vout_offset[0] = -0.034f; }
+    if (NUM_PUMPS > 1u) { g_flow_to_vout_gain[1] = 0.001232f; g_flow_to_vout_offset[1] = -0.034f; }
+    if (NUM_PUMPS > 2u) { g_flow_to_vout_gain[2] = 0.001232f; g_flow_to_vout_offset[2] = -0.034f; }
+    if (NUM_PUMPS > 3u) { g_flow_to_vout_gain[3] = 0.001232f; g_flow_to_vout_offset[3] = -0.034f; }
+    if (NUM_PUMPS > 4u) { g_flow_to_vout_gain[4] = 0.001232f; g_flow_to_vout_offset[4] = -0.034f; }
+    if (NUM_PUMPS > 5u) { g_flow_to_vout_gain[5] = 0.001232f; g_flow_to_vout_offset[5] = -0.034f; }
+    if (NUM_PUMPS > 6u) { g_flow_to_vout_gain[6] = 0.001232f; g_flow_to_vout_offset[6] = -0.034f; }
+    if (NUM_PUMPS > 7u) { g_flow_to_vout_gain[7] = 0.001232f; g_flow_to_vout_offset[7] = -0.034f; }
+
+    g_flow_calibration_initialized = 1;
 }
 
 static void pump_set_flow(uint8_t pump_i, uint16_t flow_ulpm)
 {
-    float vout = 0.001232f * flow_ulpm - 0.034f;
+    flow_calibration_init_defaults();
+
+    if (pump_i >= NUM_PUMPS) {
+        return;
+    }
+
+    float vout = g_flow_to_vout_gain[pump_i] * (float)flow_ulpm + g_flow_to_vout_offset[pump_i];
     vout = clampf(vout, 0.034f, AVDD_VOLTS);
     writeDAC(pump_i, AVDD_VOLTS, vout, DAC_MODE_DEFAULT);
 }

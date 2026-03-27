@@ -19,7 +19,29 @@ volatile uint8_t g_spi_last_payload[PUMP_MAX_PAYLOAD];
 
 static uint8_t payload[PUMP_MAX_PAYLOAD];
 
-#define RX_TIMEOUT 2
+#define RX_TIMEOUT 20
+
+static uint8_t spi_is_selected(void)
+{
+    return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == GPIO_PIN_RESET;
+}
+
+static void spi_recover_bus(void)
+{
+    __HAL_SPI_CLEAR_OVRFLAG(&hspi1);
+    HAL_SPI_DeInit(&hspi1);
+    (void)HAL_SPI_Init(&hspi1);
+}
+
+static void wait_for_nss_release(void)
+{
+    uint32_t start = HAL_GetTick();
+    while (spi_is_selected()) {
+        if ((uint32_t)(HAL_GetTick() - start) > 2u) {
+            break;
+        }
+    }
+}
 
 static void handle_frame(uint8_t cmd, const uint8_t *p, uint8_t len)
 {
@@ -66,8 +88,14 @@ void pump_spi_nack_poll(void)
 {
     uint8_t hdr[2] = {0,0};
 
-    if (HAL_SPI_Receive(&hspi1, hdr, 2, RX_TIMEOUT) != HAL_OK) {
+    if (!spi_is_selected()) {
+        return;
+    }
+
+    if (HAL_SPI_Receive(&hspi1, hdr, sizeof(hdr), RX_TIMEOUT) != HAL_OK) {
         g_spi_error_count++;
+        spi_recover_bus();
+        wait_for_nss_release();
         return;
     }
 
@@ -76,12 +104,16 @@ void pump_spi_nack_poll(void)
 
     if (len > PUMP_MAX_PAYLOAD) {
         g_spi_error_count++;
+        spi_recover_bus();
+        wait_for_nss_release();
         return;
     }
 
     if (len > 0) {
         if (HAL_SPI_Receive(&hspi1, payload, len, RX_TIMEOUT) != HAL_OK) {
             g_spi_error_count++;
+            spi_recover_bus();
+            wait_for_nss_release();
             return;
         }
         memcpy((void*)g_spi_last_payload, payload, len);
@@ -92,4 +124,6 @@ void pump_spi_nack_poll(void)
     g_spi_frame_count++;
 
     handle_frame(cmd, payload, len);
+
+    wait_for_nss_release();
 }
