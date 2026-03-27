@@ -9,7 +9,24 @@
 #define CMD_TRIGGER_RDY 0x04
 #define CMD_BLOCK 0x10
 
+#define SPI_TX_RETRIES 3u
+#define SPI_TX_SETTLE_CYCLES 64u
+
 uint32_t SPI_TIMEOUT = 100;
+
+static void spi_line_settle_delay(void)
+{
+    for (volatile uint32_t i = 0; i < SPI_TX_SETTLE_CYCLES; i++) {
+        __NOP();
+    }
+}
+
+static void spi_recover_bus(void)
+{
+    __HAL_SPI_CLEAR_OVRFLAG(&hspi1);
+    HAL_SPI_DeInit(&hspi1);
+    (void)HAL_SPI_Init(&hspi1);
+}
 
 void setCS(uint8_t line) {
 	line = 7u - line;
@@ -21,13 +38,16 @@ void setCS(uint8_t line) {
 	HAL_GPIO_WritePin(A1_CS_GPIO_Port, A1_CS_Pin, A1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(A2_CS_GPIO_Port, A2_CS_Pin, A2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(EN_CS_GPIO_Port, EN_CS_Pin, GPIO_PIN_RESET);
+    spi_line_settle_delay();
 }
 
 void resetCS(void) {
 	HAL_GPIO_WritePin(EN_CS_GPIO_Port, EN_CS_Pin, GPIO_PIN_SET);
+    spi_line_settle_delay();
 }
 
-static int spi_tx_frame(uint8_t card, uint8_t cmd, const void *payload, uint8_t len) {
+static int spi_tx_frame_once(uint8_t card, uint8_t cmd, const void *payload, uint8_t len)
+{
     uint8_t hdr[2] = { cmd, len };
 
     setCS(card);
@@ -46,6 +66,19 @@ static int spi_tx_frame(uint8_t card, uint8_t cmd, const void *payload, uint8_t 
 
     resetCS();
     return 1;
+}
+
+static int spi_tx_frame(uint8_t card, uint8_t cmd, const void *payload, uint8_t len) {
+    for (uint32_t attempt = 0; attempt < SPI_TX_RETRIES; attempt++) {
+        if (spi_tx_frame_once(card, cmd, payload, len)) {
+            return 1;
+        }
+
+        spi_recover_bus();
+        HAL_Delay(1);
+    }
+
+    return 0;
 }
 
 int spi_send_clear(uint8_t card) {
