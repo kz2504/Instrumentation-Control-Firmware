@@ -29,6 +29,10 @@ extern volatile uint8_t  g_sched_cur_index;
 extern volatile uint32_t g_sched_block_start_ms;
 extern volatile uint32_t g_sched_blocks_loaded;
 
+/* Master calibration override controls. */
+extern volatile uint8_t g_master_calibration_mode;
+extern volatile float   g_master_calibration_voltage;
+
 void schedule_clear(void);
 int  schedule_store_block(const block_msg_t *b);
 void schedule_start(uint32_t now_ms);

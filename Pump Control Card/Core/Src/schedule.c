@@ -11,6 +11,9 @@
 #define FLOW_TO_VOUT_DEFAULT_GAIN   0.001232f
 #define FLOW_TO_VOUT_DEFAULT_OFFSET (-0.034f)
 
+volatile uint8_t g_master_calibration_mode = 0;
+volatile float g_master_calibration_voltage = 1.00f;
+
 static float g_flow_to_vout_gain[NUM_PUMPS];
 static float g_flow_to_vout_offset[NUM_PUMPS];
 static uint8_t g_flow_calibration_initialized = 0;
@@ -170,7 +173,14 @@ static void pump_set_flow(uint8_t pump_i, uint16_t flow_ulpm)
         return;
     }
 
-    float vout = g_flow_to_vout_gain[pump_i] * (float)flow_ulpm + g_flow_to_vout_offset[pump_i];
+    float vout;
+
+    if (g_master_calibration_mode) {
+        vout = g_master_calibration_voltage;
+    } else {
+        vout = g_flow_to_vout_gain[pump_i] * (float)flow_ulpm + g_flow_to_vout_offset[pump_i];
+    }
+
     vout = clampf(vout, 0.034f, AVDD_VOLTS);
     writeDAC(pump_i, AVDD_VOLTS, vout, DAC_MODE_DEFAULT);
 }
