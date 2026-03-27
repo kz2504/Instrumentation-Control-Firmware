@@ -11,11 +11,6 @@
 #define FLOW_TO_VOUT_DEFAULT_GAIN   0.001232f
 #define FLOW_TO_VOUT_DEFAULT_OFFSET (-0.034f)
 
-/*
- * Master calibration override:
- *  - Set g_master_calibration_mode = 1 to force every pump to a fixed voltage.
- *  - Tune g_master_calibration_voltage for curve characterization.
- */
 volatile uint8_t g_master_calibration_mode = 0;
 volatile float g_master_calibration_voltage = 1.00f;
 
