@@ -1,0 +1,17 @@
+../Core/Src/protocol.c:19:17:protocol_crc16_update	3
+../Core/Src/protocol.c:39:13:protocol_reset_frame	1
+../Core/Src/protocol.c:48:13:protocol_emit_parser_error	2
+../Core/Src/protocol.c:56:10:protocol_crc16_ccitt_false	2
+../Core/Src/protocol.c:69:10:read_u16_le	1
+../Core/Src/protocol.c:74:10:read_u32_le	1
+../Core/Src/protocol.c:82:10:read_u64_le	1
+../Core/Src/protocol.c:94:9:read_i32_le	1
+../Core/Src/protocol.c:99:6:write_u16_le	1
+../Core/Src/protocol.c:105:6:write_u32_le	1
+../Core/Src/protocol.c:113:6:write_u64_le	1
+../Core/Src/protocol.c:125:6:protocol_parser_init	2
+../Core/Src/protocol.c:142:6:protocol_parser_process	21
+../Core/Src/protocol.c:265:10:protocol_encode_frame	8
+../Core/Src/protocol.c:308:9:protocol_send_frame	3
+../Core/Src/protocol.c:332:9:protocol_send_ack	1
+../Core/Src/protocol.c:345:9:protocol_send_error	1

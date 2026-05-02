@@ -1,0 +1,5 @@
+#Start recording tcl command: 4/27/2026 23:19:07
+#Project Location: C:/Users/Frank/Documents/Embedded Firmware; Project name: TimingCard
+prj_project new -name "TimingCard" -impl "impl1" -dev LCMXO2-7000HC-6TG144I -synthesis "lse"
+prj_project save
+#Stop recording: 4/27/2026 23:27:39

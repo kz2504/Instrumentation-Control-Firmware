@@ -1,0 +1,5 @@
+
+
+-g RamCfg:Reset
+
+-path "C:/Users/Frank/Documents/Embedded Firmware/TimingCard"  

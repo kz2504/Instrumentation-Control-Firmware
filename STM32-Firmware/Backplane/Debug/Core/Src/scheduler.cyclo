@@ -1,0 +1,16 @@
+../Core/Src/scheduler.c:24:16:scheduler_validate_pump_action	10
+../Core/Src/scheduler.c:69:16:scheduler_validate_gpio_action	16
+../Core/Src/scheduler.c:139:16:scheduler_validate_action_record	9
+../Core/Src/scheduler.c:209:6:scheduler_init	1
+../Core/Src/scheduler.c:215:9:scheduler_clear	3
+../Core/Src/scheduler.c:236:9:scheduler_upload_event	12
+../Core/Src/scheduler.c:325:9:scheduler_start	3
+../Core/Src/scheduler.c:343:6:scheduler_start_run	1
+../Core/Src/scheduler.c:349:6:scheduler_stop	2
+../Core/Src/scheduler.c:364:6:scheduler_get_ready_event	6
+../Core/Src/scheduler.c:403:6:scheduler_is_run_complete	2
+../Core/Src/scheduler.c:413:6:scheduler_get_status	2
+../Core/Src/scheduler.c:427:6:scheduler_record_error	1
+../Core/Src/scheduler.c:432:6:scheduler_set_error	1
+../Core/Src/scheduler.c:438:9:scheduler_get_state	1
+../Core/Src/scheduler.c:443:17:scheduler_get_schedule	1

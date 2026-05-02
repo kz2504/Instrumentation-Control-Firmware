@@ -1,0 +1,22 @@
+Results of NGD DRC are available in top_drc.log.
+Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00a/data/xo2alib.ngl'...
+Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00/data/xo2clib.ngl'...
+Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/mg5g00/data/mg5glib.ngl'...
+Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/or5g00/data/orc5glib.ngl'...
+
+
+Running DRC...
+
+WARNING - synthesis: logical net 'spi_cs_n' has no load.
+WARNING - synthesis: input pad net 'spi_cs_n' has no legal load.
+WARNING - synthesis: logical net 'spi_mosi' has no load.
+WARNING - synthesis: input pad net 'spi_mosi' has no legal load.
+WARNING - synthesis: logical net 'spi_sck' has no load.
+WARNING - synthesis: input pad net 'spi_sck' has no legal load.
+WARNING - synthesis: DRC complete with 6 warnings.
+
+Design Results:
+    110 blocks expanded
+completed the first expansion
+All blocks are expanded and NGD expansion is successful.
+Writing NGD file TimingCard_impl1.ngd.

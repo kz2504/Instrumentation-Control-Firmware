@@ -1,0 +1,17 @@
+../Core/Src/backplane_card_bus.c:27:13:card_bus_set_error	16	static
+../Core/Src/backplane_card_bus.c:33:13:spi_delay_cycles	16	static,ignoring_inline_asm
+../Core/Src/backplane_card_bus.c:41:13:card_bus_select_slot	16	static
+../Core/Src/backplane_card_bus.c:56:13:card_bus_deselect_all	8	static
+../Core/Src/backplane_card_bus.c:62:13:card_bus_spi_transaction	32	static
+../Core/Src/backplane_card_bus.c:104:13:card_bus_clear_slots	24	static
+../Core/Src/backplane_card_bus.c:118:13:card_bus_store_identify_info	16	static
+../Core/Src/backplane_card_bus.c:129:13:card_bus_identify_slot	56	static
+../Core/Src/backplane_card_bus.c:158:16:card_bus_find_missing_slot	24	static
+../Core/Src/backplane_card_bus.c:178:6:card_bus_init	8	static
+../Core/Src/backplane_card_bus.c:184:6:card_bus_discover_all	16	static
+../Core/Src/backplane_card_bus.c:207:6:card_bus_discover_type_slots	24	static
+../Core/Src/backplane_card_bus.c:266:6:card_bus_is_slot_present	16	static
+../Core/Src/backplane_card_bus.c:286:21:card_bus_get_slots	4	static
+../Core/Src/backplane_card_bus.c:291:6:card_bus_command	152	static
+../Core/Src/backplane_card_bus.c:349:9:card_bus_get_last_status	4	static
+../Core/Src/backplane_card_bus.c:354:9:card_bus_get_last_detail	4	static

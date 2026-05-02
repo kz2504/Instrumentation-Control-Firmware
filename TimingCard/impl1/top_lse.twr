@@ -1,0 +1,213 @@
+--------------------------------------------------------------------------------
+Lattice Synthesis Timing Report, Version  
+Tue Apr 28 01:14:48 2026
+
+Copyright (c) 1991-1994 by NeoCAD Inc. All rights reserved.
+Copyright (c) 1995 AT&T Corp.   All rights reserved.
+Copyright (c) 1995-2001 Lucent Technologies Inc.  All rights reserved.
+Copyright (c) 2001 Agere Systems   All rights reserved.
+Copyright (c) 2002-2024 Lattice Semiconductor Corporation,  All rights reserved.
+
+Report Information
+------------------
+Design:     top
+Constraint file:  
+Report level:    verbose report, limited to 3 items per constraint
+--------------------------------------------------------------------------------
+
+
+
+================================================================================
+Constraint: create_clock -period 5.000000 -name clk0 [get_nets clk_c]
+            449 items scored, 0 timing errors detected.
+--------------------------------------------------------------------------------
+
+
+Passed:  The following path meets requirements by 0.031ns
+
+ Logical Details:  Cell type  Pin type       Cell name  (clock net +/-)
+
+   Source:         FD1S3AX    CK             counter_15_16__i0  (from clk_c +)
+   Destination:    FD1S3AX    D              counter_15_16__i27  (to clk_c +)
+
+   Delay:                   4.836ns  (66.9% logic, 33.1% route), 16 logic levels.
+
+ Constraint Details:
+
+      4.836ns data_path counter_15_16__i0 to counter_15_16__i27 meets
+      5.000ns delay constraint less
+      0.133ns L_S requirement (totaling 4.867ns) by 0.031ns
+
+ Path Details: counter_15_16__i0 to counter_15_16__i27
+
+   Name    Fanout   Delay (ns)          Pins               Resource(Cell.Net)
+L_CO        ---     0.367             CK to Q              counter_15_16__i0 (from clk_c)
+Route         1   e 0.660                                  n29
+A1_TO_FCO   ---     0.684           A[2] to COUT           counter_15_16_add_4_1
+Route         1   e 0.020                                  n139
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_3
+Route         1   e 0.020                                  n140
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_5
+Route         1   e 0.020                                  n141
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_7
+Route         1   e 0.020                                  n142
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_9
+Route         1   e 0.020                                  n143
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_11
+Route         1   e 0.020                                  n144
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_13
+Route         1   e 0.020                                  n145
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_15
+Route         1   e 0.020                                  n146
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_17
+Route         1   e 0.020                                  n147
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_19
+Route         1   e 0.020                                  n148
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_21
+Route         1   e 0.020                                  n149
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_23
+Route         1   e 0.020                                  n150
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_25
+Route         1   e 0.020                                  n151
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_27
+Route         1   e 0.020                                  n152
+FCI_TO_F    ---     0.495            CIN to S[2]           counter_15_16_add_4_29
+Route         1   e 0.660                                  n123
+                  --------
+                    4.836  (66.9% logic, 33.1% route), 16 logic levels.
+
+
+Passed:  The following path meets requirements by 0.031ns
+
+ Logical Details:  Cell type  Pin type       Cell name  (clock net +/-)
+
+   Source:         FD1S3AX    CK             counter_15_16__i0  (from clk_c +)
+   Destination:    FD1S3AX    D              counter_15_16__i28  (to clk_c +)
+
+   Delay:                   4.836ns  (66.9% logic, 33.1% route), 16 logic levels.
+
+ Constraint Details:
+
+      4.836ns data_path counter_15_16__i0 to counter_15_16__i28 meets
+      5.000ns delay constraint less
+      0.133ns L_S requirement (totaling 4.867ns) by 0.031ns
+
+ Path Details: counter_15_16__i0 to counter_15_16__i28
+
+   Name    Fanout   Delay (ns)          Pins               Resource(Cell.Net)
+L_CO        ---     0.367             CK to Q              counter_15_16__i0 (from clk_c)
+Route         1   e 0.660                                  n29
+A1_TO_FCO   ---     0.684           A[2] to COUT           counter_15_16_add_4_1
+Route         1   e 0.020                                  n139
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_3
+Route         1   e 0.020                                  n140
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_5
+Route         1   e 0.020                                  n141
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_7
+Route         1   e 0.020                                  n142
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_9
+Route         1   e 0.020                                  n143
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_11
+Route         1   e 0.020                                  n144
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_13
+Route         1   e 0.020                                  n145
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_15
+Route         1   e 0.020                                  n146
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_17
+Route         1   e 0.020                                  n147
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_19
+Route         1   e 0.020                                  n148
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_21
+Route         1   e 0.020                                  n149
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_23
+Route         1   e 0.020                                  n150
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_25
+Route         1   e 0.020                                  n151
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_27
+Route         1   e 0.020                                  n152
+FCI_TO_F    ---     0.495            CIN to S[2]           counter_15_16_add_4_29
+Route         1   e 0.660                                  n122
+                  --------
+                    4.836  (66.9% logic, 33.1% route), 16 logic levels.
+
+
+Passed:  The following path meets requirements by 0.181ns
+
+ Logical Details:  Cell type  Pin type       Cell name  (clock net +/-)
+
+   Source:         FD1S3AX    CK             counter_15_16__i0  (from clk_c +)
+   Destination:    FD1S3AX    D              counter_15_16__i25  (to clk_c +)
+
+   Delay:                   4.686ns  (66.3% logic, 33.7% route), 15 logic levels.
+
+ Constraint Details:
+
+      4.686ns data_path counter_15_16__i0 to counter_15_16__i25 meets
+      5.000ns delay constraint less
+      0.133ns L_S requirement (totaling 4.867ns) by 0.181ns
+
+ Path Details: counter_15_16__i0 to counter_15_16__i25
+
+   Name    Fanout   Delay (ns)          Pins               Resource(Cell.Net)
+L_CO        ---     0.367             CK to Q              counter_15_16__i0 (from clk_c)
+Route         1   e 0.660                                  n29
+A1_TO_FCO   ---     0.684           A[2] to COUT           counter_15_16_add_4_1
+Route         1   e 0.020                                  n139
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_3
+Route         1   e 0.020                                  n140
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_5
+Route         1   e 0.020                                  n141
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_7
+Route         1   e 0.020                                  n142
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_9
+Route         1   e 0.020                                  n143
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_11
+Route         1   e 0.020                                  n144
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_13
+Route         1   e 0.020                                  n145
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_15
+Route         1   e 0.020                                  n146
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_17
+Route         1   e 0.020                                  n147
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_19
+Route         1   e 0.020                                  n148
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_21
+Route         1   e 0.020                                  n149
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_23
+Route         1   e 0.020                                  n150
+FCI_TO_FCO  ---     0.130            CIN to COUT           counter_15_16_add_4_25
+Route         1   e 0.020                                  n151
+FCI_TO_F    ---     0.495            CIN to S[2]           counter_15_16_add_4_27
+Route         1   e 0.660                                  n125
+                  --------
+                    4.686  (66.3% logic, 33.7% route), 15 logic levels.
+
+Report: 4.969 ns is the maximum delay for this constraint.
+
+
+Timing Report Summary
+--------------
+--------------------------------------------------------------------------------
+Constraint                              |   Constraint|       Actual|Levels
+--------------------------------------------------------------------------------
+                                        |             |             |
+create_clock -period 5.000000 -name     |             |             |
+clk0 [get_nets clk_c]                   |     5.000 ns|     4.969 ns|    16  
+                                        |             |             |
+--------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+
+Timing summary:
+---------------
+
+Timing errors: 0  Score: 0
+
+Constraints cover  449 paths, 73 nets, and 101 connections (63.9% coverage)
+
+
+Peak memory: 66863104 bytes, TRCE: 2170880 bytes, DLYMAN: 0 bytes
+CPU_TIME_REPORT: 0 secs 
