@@ -12,7 +12,9 @@
 #define PUMP_CARD_DAC_AVDD_V      5.0f
 #define PUMP_CARD_DAC_ZERO_V      0.0f
 #define PUMP_CARD_MAX_VOLTAGE_MV  5000U
-#define PUMP_CARD_DAC_SETTLE_US   10U
+#define PUMP_CARD_DAC_SETTLE_US   500U
+#define PUMP_CARD_DIR_LATCH_COUNT 2U
+#define PUMP_CARD_EN_LATCH_COUNT  2U
 
 typedef struct
 {
@@ -99,54 +101,131 @@ static void pump_card_set_direction_bit(uint8_t local_pump_id, uint8_t direction
   }
 }
 
-static void pump_card_apply_outputs(uint8_t index, uint8_t was_enabled)
+static uint32_t pump_card_normalize_speed_mV(uint32_t control, uint32_t speed_mV)
 {
-  uint32_t speed_mV = g_pump_regs.outputs[index].speed_mV;
-  uint32_t control = g_pump_regs.outputs[index].control;
-  uint8_t enable = (uint8_t)(control & PUMP_CONTROL_ENABLE);
-  uint8_t direction = (uint8_t)((control & PUMP_CONTROL_DIRECTION) != 0U);
+  if ((control & PUMP_CONTROL_ENABLE) == 0U)
+  {
+    return 0U;
+  }
 
   if (speed_mV > PUMP_CARD_MAX_VOLTAGE_MV)
   {
-    speed_mV = PUMP_CARD_MAX_VOLTAGE_MV;
-    g_pump_regs.outputs[index].speed_mV = speed_mV;
+    return PUMP_CARD_MAX_VOLTAGE_MV;
   }
 
-  if (enable != 0U)
+  return speed_mV;
+}
+
+static PumpOutputState pump_card_make_output_state(uint32_t control, uint32_t speed_mV)
+{
+  PumpOutputState state;
+
+  state.control = (control & (PUMP_CONTROL_ENABLE | PUMP_CONTROL_DIRECTION));
+  state.speed_mV = pump_card_normalize_speed_mV(state.control, speed_mV);
+  return state;
+}
+
+static void pump_card_latch_dir_bits(uint8_t latch_count)
+{
+  uint8_t latch_index;
+
+  for (latch_index = 0U; latch_index < latch_count; latch_index++)
   {
-    pump_card_set_direction_bit(index, direction);
-    shiftByteDIR(g_pump_regs.dir_bits);
-    writeDAC(index, PUMP_CARD_DAC_AVDD_V, (float)speed_mV / 1000.0f, 0U);
-    if (was_enabled == 0U)
-    {
-      pump_card_wait_for_dac_settle();
-    }
-    pump_card_set_enable_bit(index, 1U);
-    shiftByteEN(g_pump_regs.en_bits);
-  }
-  else
-  {
-    pump_card_set_enable_bit(index, 0U);
-    shiftByteEN(g_pump_regs.en_bits);
-    writeDAC(index, PUMP_CARD_DAC_AVDD_V, PUMP_CARD_DAC_ZERO_V, 0U);
-    pump_card_set_direction_bit(index, direction);
     shiftByteDIR(g_pump_regs.dir_bits);
   }
 }
 
-static void pump_card_set_output_state(uint8_t index, uint32_t control, uint32_t speed_mV)
+static void pump_card_latch_en_bits(uint8_t latch_count)
 {
-  uint8_t was_enabled = (uint8_t)(g_pump_regs.outputs[index].control & PUMP_CONTROL_ENABLE);
+  uint8_t latch_index;
 
-  g_pump_regs.outputs[index].control = (control & (PUMP_CONTROL_ENABLE | PUMP_CONTROL_DIRECTION));
-  g_pump_regs.outputs[index].speed_mV = speed_mV;
-
-  if ((g_pump_regs.outputs[index].control & PUMP_CONTROL_ENABLE) == 0U)
+  for (latch_index = 0U; latch_index < latch_count; latch_index++)
   {
-    g_pump_regs.outputs[index].speed_mV = 0U;
+    shiftByteEN(g_pump_regs.en_bits);
+  }
+}
+
+static void pump_card_apply_output_batch(const PumpOutputState target_outputs[PUMP_CARD_PUMPS_PER_CARD],
+                                         const uint8_t touched_outputs[PUMP_CARD_PUMPS_PER_CARD])
+{
+  uint8_t pump_index;
+  uint8_t touched_any = 0U;
+  uint8_t final_enable_any = 0U;
+
+  for (pump_index = 0U; pump_index < PUMP_CARD_PUMPS_PER_CARD; pump_index++)
+  {
+    if (touched_outputs[pump_index] == 0U)
+    {
+      continue;
+    }
+
+    touched_any = 1U;
+    pump_card_set_enable_bit(pump_index, 0U);
   }
 
-  pump_card_apply_outputs(index, was_enabled);
+  if (touched_any == 0U)
+  {
+    return;
+  }
+
+  shiftByteEN(g_pump_regs.en_bits);
+
+  for (pump_index = 0U; pump_index < PUMP_CARD_PUMPS_PER_CARD; pump_index++)
+  {
+    uint8_t direction;
+
+    if (touched_outputs[pump_index] == 0U)
+    {
+      continue;
+    }
+
+    direction = (uint8_t)((target_outputs[pump_index].control & PUMP_CONTROL_DIRECTION) != 0U);
+    pump_card_set_direction_bit(pump_index, direction);
+  }
+
+  pump_card_latch_dir_bits(PUMP_CARD_DIR_LATCH_COUNT);
+
+  for (pump_index = 0U; pump_index < PUMP_CARD_PUMPS_PER_CARD; pump_index++)
+  {
+    float v_out;
+
+    if (touched_outputs[pump_index] == 0U)
+    {
+      continue;
+    }
+
+    v_out = (float)target_outputs[pump_index].speed_mV / 1000.0f;
+    writeDAC(pump_index, PUMP_CARD_DAC_AVDD_V, v_out, 0U);
+
+    if ((target_outputs[pump_index].control & PUMP_CONTROL_ENABLE) != 0U)
+    {
+      final_enable_any = 1U;
+    }
+  }
+
+  if (final_enable_any != 0U)
+  {
+    pump_card_wait_for_dac_settle();
+  }
+
+  for (pump_index = 0U; pump_index < PUMP_CARD_PUMPS_PER_CARD; pump_index++)
+  {
+    uint8_t enable;
+
+    if (touched_outputs[pump_index] == 0U)
+    {
+      continue;
+    }
+
+    enable = (uint8_t)(target_outputs[pump_index].control & PUMP_CONTROL_ENABLE);
+    pump_card_set_enable_bit(pump_index, enable);
+    g_pump_regs.outputs[pump_index] = target_outputs[pump_index];
+  }
+
+  if (final_enable_any != 0U)
+  {
+    pump_card_latch_en_bits(PUMP_CARD_EN_LATCH_COUNT);
+  }
 }
 
 static void pump_card_outputs_all_off(void)
@@ -417,6 +496,12 @@ bool pump_card_regs_write(uint16_t reg_addr, uint32_t value, uint8_t *status_out
 
 void pump_card_regs_on_sync_edge(void)
 {
+  PumpOutputState target_outputs[PUMP_CARD_PUMPS_PER_CARD];
+  uint8_t touched_outputs[PUMP_CARD_PUMPS_PER_CARD];
+
+  memcpy(target_outputs, g_pump_regs.outputs, sizeof(target_outputs));
+  memset(touched_outputs, 0, sizeof(touched_outputs));
+
   while ((g_pump_regs.run_active != 0U) &&
          (g_pump_regs.queue_head < g_pump_regs.queue_count) &&
          (g_pump_regs.queue_event_index[g_pump_regs.queue_head] == g_pump_regs.current_event_index))
@@ -427,11 +512,14 @@ void pump_card_regs_on_sync_edge(void)
 
     if (local_pump < PUMP_CARD_PUMPS_PER_CARD)
     {
-      pump_card_set_output_state(local_pump, control, speed_mV);
+      target_outputs[local_pump] = pump_card_make_output_state(control, speed_mV);
+      touched_outputs[local_pump] = 1U;
     }
 
     g_pump_regs.queue_head++;
   }
+
+  pump_card_apply_output_batch(target_outputs, touched_outputs);
 
   if (g_pump_regs.run_active != 0U)
   {
