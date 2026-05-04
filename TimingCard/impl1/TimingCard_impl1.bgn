@@ -4,7 +4,7 @@ Copyright (c) 1995 AT&T Corp.   All rights reserved.
 Copyright (c) 1995-2001 Lucent Technologies Inc.  All rights reserved.
 Copyright (c) 2001 Agere Systems   All rights reserved.
 Copyright (c) 2002-2024 Lattice Semiconductor Corporation,  All rights reserved.
-Tue Apr 28 01:17:47 2026
+Mon May 04 01:50:07 2026
 
 
 Command: bitgen -g RamCfg:Reset -path C:/Users/Frank/Documents/Embedded Firmware/TimingCard -w -jedec -gui -msgset C:/Users/Frank/Documents/Embedded Firmware/TimingCard/promote.xml TimingCard_impl1.ncd TimingCard_impl1.prf 
@@ -86,9 +86,9 @@ Initialized UFM Pages:                     0 Page.
 =========
 Padding summary
 =========
-Padded 1237760 bits for this design
+Padded 555392 bits for this design
 
 
-Total CPU Time: 1 secs 
-Total REAL Time: 0 secs 
-Peak Memory Usage: 294 MB
+Total CPU Time: 2 secs 
+Total REAL Time: 2 secs 
+Peak Memory Usage: 321 MB

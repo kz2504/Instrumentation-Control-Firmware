@@ -17,6 +17,7 @@ extern "C" {
 #define MAX_EVENT_ACTION_BYTES        192U
 #define MAX_PUMPS                     64U
 #define MAX_GPIO_OUTPUTS              32U
+#define SCHEDULE_MIN_EVENT_SPACING_US 10000ULL
 
 /*
  * Action record layout inside each event:
@@ -70,10 +71,7 @@ void scheduler_init(void);
 uint8_t scheduler_clear(uint8_t *detail);
 uint8_t scheduler_upload_event(const uint8_t *payload, uint16_t payload_len, uint8_t *detail);
 uint8_t scheduler_start(uint8_t *detail);
-void scheduler_start_run(uint64_t start_time_us);
 void scheduler_stop(void);
-bool scheduler_get_ready_event(uint64_t current_time_us, const ScheduleEvent **event_out);
-bool scheduler_is_run_complete(void);
 void scheduler_get_status(SchedulerStatus *status, uint64_t current_time_us);
 void scheduler_record_error(uint8_t error_code);
 void scheduler_set_error(uint8_t error_code);

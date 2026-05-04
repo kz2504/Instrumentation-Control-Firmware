@@ -1,36 +1,35 @@
 #include "backplane_pump_bus.h"
 
 #include "backplane_card_bus.h"
+#include "card_registers.h"
 #include "protocol.h"
+#include "spi_frame.h"
 
 #include <string.h>
 
-#define PUMP_BUS_DISCOVERY_PASSES    6U
-
-#define SCHED_ACTION_HEADER_SIZE     4U
-#define SCHED_PUMP_PAYLOAD_SIZE      8U
-
-typedef struct
-{
-  uint8_t card_slot;
-  uint16_t local_event_index;
-} PumpExecTarget;
+#define PUMP_BUS_DISCOVERY_PASSES  6U
+#define ACTION_HEADER_SIZE         4U
+#define PUMP_PAYLOAD_SIZE          8U
 
 typedef struct
 {
-  uint32_t global_event_id;
-  uint8_t target_count;
-  PumpExecTarget targets[CARD_BUS_SLOT_COUNT];
-} PumpExecMapEntry;
-
-typedef struct
-{
-  PumpExecMapEntry exec_map[MAX_EVENTS];
-  uint16_t exec_map_count;
-  uint16_t next_local_event_index[CARD_BUS_SLOT_COUNT];
+  uint8_t required_slot_mask;
+  uint8_t schedule_uses_pumps;
+  uint8_t offloaded_schedule_prepared;
+  uint8_t offloaded_schedule_active;
+  uint16_t queued_action_count;
   uint8_t last_status;
   uint8_t last_detail;
 } PumpBusContext;
+
+typedef struct
+{
+  uint8_t module_type;
+  uint8_t module_id;
+  uint8_t action_type;
+  uint8_t action_len;
+  const uint8_t *payload;
+} PumpActionView;
 
 static PumpBusContext g_pump_bus;
 
@@ -40,54 +39,259 @@ static void pump_bus_set_error(uint8_t status, uint8_t detail)
   g_pump_bus.last_detail = detail;
 }
 
-static void pump_bus_reset_distribution_state(void)
+static bool pump_bus_read_action(const ScheduleEvent *event,
+                                 uint16_t offset,
+                                 uint8_t action_index,
+                                 PumpActionView *action_out)
 {
-  memset(g_pump_bus.exec_map, 0, sizeof(g_pump_bus.exec_map));
-  memset(g_pump_bus.next_local_event_index, 0, sizeof(g_pump_bus.next_local_event_index));
-  g_pump_bus.exec_map_count = 0U;
-}
-
-static uint32_t pump_bus_flow_nl_to_ul_min(uint32_t flow_nl_min)
-{
-  return (uint32_t)(((uint64_t)flow_nl_min + 500ULL) / 1000ULL);
-}
-
-static bool pump_bus_send_simple_command(uint8_t slot, uint8_t command_id)
-{
-  if (!card_bus_command(slot, command_id, 0, 0U, 0))
+  if ((event == 0) || (action_out == 0))
   {
-    pump_bus_set_error(card_bus_get_last_status(), card_bus_get_last_detail());
+    pump_bus_set_error(STATUS_BAD_LEN, action_index);
     return false;
   }
 
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
+  if ((uint16_t)(offset + ACTION_HEADER_SIZE) > event->action_bytes_len)
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, action_index);
+    return false;
+  }
+
+  action_out->action_len = event->action_bytes[offset + 3U];
+  if ((uint16_t)(offset + ACTION_HEADER_SIZE + action_out->action_len) > event->action_bytes_len)
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, action_index);
+    return false;
+  }
+
+  action_out->module_type = event->action_bytes[offset + 0U];
+  action_out->module_id = event->action_bytes[offset + 1U];
+  action_out->action_type = event->action_bytes[offset + 2U];
+  action_out->payload = &event->action_bytes[offset + ACTION_HEADER_SIZE];
   return true;
 }
 
-static PumpExecMapEntry *pump_bus_find_exec_map(uint32_t global_event_id)
+static uint32_t pump_bus_flow_nl_to_speed_mV(uint32_t flow_nl_min)
 {
-  uint16_t index;
+  uint64_t speed_mV = ((uint64_t)flow_nl_min + 100ULL) / 200ULL;
 
-  for (index = 0U; index < g_pump_bus.exec_map_count; index++)
+  if (speed_mV > 5000ULL)
   {
-    if (g_pump_bus.exec_map[index].global_event_id == global_event_id)
+    speed_mV = 5000ULL;
+  }
+
+  return (uint32_t)speed_mV;
+}
+
+static bool pump_bus_build_registers(uint8_t pump_id,
+                                     uint8_t action_type,
+                                     const uint8_t *payload,
+                                     uint8_t payload_len,
+                                     uint8_t *slot_out,
+                                     uint8_t *local_pump_out,
+                                     uint32_t *control_out,
+                                     uint32_t *speed_mV_out)
+{
+  uint8_t slot;
+  uint8_t local_pump;
+  uint32_t control;
+  uint32_t speed_mV;
+
+  if ((slot_out == 0) || (local_pump_out == 0) || (control_out == 0) || (speed_mV_out == 0))
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, pump_id);
+    return false;
+  }
+
+  if (action_type != PUMP_SET_STATE)
+  {
+    pump_bus_set_error(STATUS_BAD_CMD, action_type);
+    return false;
+  }
+
+  if ((payload == 0) || (payload_len != PUMP_PAYLOAD_SIZE))
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, pump_id);
+    return false;
+  }
+
+  slot = (uint8_t)(pump_id / 8U);
+  local_pump = (uint8_t)(pump_id % 8U);
+  if (slot >= CARD_BUS_SLOT_COUNT)
+  {
+    pump_bus_set_error(STATUS_BAD_ADDR, pump_id);
+    return false;
+  }
+
+  control = (payload[1] != 0U) ? PUMP_CONTROL_DIRECTION : 0U;
+  speed_mV = 0U;
+  if (payload[0] != 0U)
+  {
+    control |= PUMP_CONTROL_ENABLE;
+    speed_mV = pump_bus_flow_nl_to_speed_mV(read_u32_le(&payload[4]));
+  }
+
+  *slot_out = slot;
+  *local_pump_out = local_pump;
+  *control_out = control;
+  *speed_mV_out = speed_mV;
+  pump_bus_set_error(STATUS_OK, 0U);
+  return true;
+}
+
+static uint8_t pump_bus_required_slots_mask(const Schedule *schedule,
+                                            uint8_t *mask_out,
+                                            uint16_t *action_count_out,
+                                            uint8_t *uses_pumps_out)
+{
+  uint16_t event_index;
+  uint16_t per_slot_counts[CARD_BUS_SLOT_COUNT];
+  uint16_t total_action_count = 0U;
+  uint8_t mask = 0U;
+  uint8_t uses_pumps = 0U;
+
+  if ((schedule == 0) || (mask_out == 0) || (action_count_out == 0) || (uses_pumps_out == 0))
+  {
+    return STATUS_BAD_LEN;
+  }
+
+  memset(per_slot_counts, 0, sizeof(per_slot_counts));
+
+  for (event_index = 0U; event_index < schedule->event_count; event_index++)
+  {
+    const ScheduleEvent *event = &schedule->events[event_index];
+    uint16_t offset = 0U;
+    uint8_t action_index;
+
+    for (action_index = 0U; action_index < event->action_count; action_index++)
     {
-      return &g_pump_bus.exec_map[index];
+      PumpActionView action;
+
+      if (!pump_bus_read_action(event, offset, action_index, &action))
+      {
+        return g_pump_bus.last_status;
+      }
+
+      if (action.module_type == MODULE_PUMP_PERISTALTIC)
+      {
+        uint8_t slot;
+        uint8_t local_pump;
+        uint32_t control;
+        uint32_t speed_mV;
+
+        uses_pumps = 1U;
+        if (!pump_bus_build_registers(action.module_id,
+                                      action.action_type,
+                                      action.payload,
+                                      action.action_len,
+                                      &slot,
+                                      &local_pump,
+                                      &control,
+                                      &speed_mV))
+        {
+          return g_pump_bus.last_status;
+        }
+
+        per_slot_counts[slot]++;
+        if (per_slot_counts[slot] > PUMP_CARD_MAX_LOCAL_EVENTS)
+        {
+          g_pump_bus.last_detail = action.module_id;
+          return STATUS_BAD_LEN;
+        }
+
+        total_action_count++;
+        mask |= (uint8_t)(1U << slot);
+      }
+
+      offset = (uint16_t)(offset + ACTION_HEADER_SIZE + action.action_len);
     }
   }
 
-  return 0;
+  *mask_out = mask;
+  *action_count_out = total_action_count;
+  *uses_pumps_out = uses_pumps;
+  return STATUS_OK;
 }
 
-static bool pump_bus_collect_required_slots(const Schedule *schedule, uint8_t *required_mask_out)
+static bool pump_bus_write_control(uint8_t slot, uint32_t value)
 {
-  uint16_t event_index;
-  uint8_t required_mask = 0U;
-
-  if ((schedule == 0) || (required_mask_out == 0))
+  if (!card_bus_write_reg(slot, CARD_REG_CONTROL, value))
   {
-    pump_bus_set_error(PUMP_STATUS_BAD_LEN, 0U);
+    pump_bus_set_error(card_bus_get_last_status(), slot);
     return false;
+  }
+
+  pump_bus_set_error(STATUS_OK, 0U);
+  return true;
+}
+
+static bool pump_bus_clear_remote_queue(uint8_t slot)
+{
+  if (!pump_bus_write_control(slot, PUMP_CARD_CONTROL_CLEAR_QUEUE))
+  {
+    return false;
+  }
+
+  return pump_bus_write_control(slot, 0U);
+}
+
+static bool pump_bus_write_queue_entry(uint8_t slot,
+                                       uint16_t event_index,
+                                       uint8_t local_pump,
+                                       uint32_t control,
+                                       uint32_t speed_mV)
+{
+  if (!card_bus_write_reg(slot, PUMP_QUEUE_REG_EVENT_INDEX, (uint32_t)event_index))
+  {
+    pump_bus_set_error(card_bus_get_last_status(), slot);
+    return false;
+  }
+
+  if (!card_bus_write_reg(slot,
+                          PUMP_QUEUE_REG_META,
+                          PUMP_QUEUE_META(local_pump, control)))
+  {
+    pump_bus_set_error(card_bus_get_last_status(), slot);
+    return false;
+  }
+
+  if (!card_bus_write_reg(slot, PUMP_QUEUE_REG_SPEED_MV, speed_mV))
+  {
+    pump_bus_set_error(card_bus_get_last_status(), slot);
+    return false;
+  }
+
+  if (!card_bus_write_reg(slot, PUMP_QUEUE_REG_PUSH, 1U))
+  {
+    pump_bus_set_error(card_bus_get_last_status(), slot);
+    return false;
+  }
+
+  pump_bus_set_error(STATUS_OK, 0U);
+  return true;
+}
+
+static bool pump_bus_upload_schedule(const Schedule *schedule)
+{
+  uint8_t slot;
+  uint16_t event_index;
+
+  if (schedule == 0)
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, 0U);
+    return false;
+  }
+
+  for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
+  {
+    if ((g_pump_bus.required_slot_mask & (uint8_t)(1U << slot)) == 0U)
+    {
+      continue;
+    }
+
+    if (!pump_bus_clear_remote_queue(slot))
+    {
+      return false;
+    }
   }
 
   for (event_index = 0U; event_index < schedule->event_count; event_index++)
@@ -98,354 +302,161 @@ static bool pump_bus_collect_required_slots(const Schedule *schedule, uint8_t *r
 
     for (action_index = 0U; action_index < event->action_count; action_index++)
     {
-      uint8_t module_type;
-      uint8_t module_id;
-      uint8_t action_len;
-      uint8_t slot;
+      PumpActionView action;
 
-      if ((uint16_t)(offset + SCHED_ACTION_HEADER_SIZE) > event->action_bytes_len)
+      if (!pump_bus_read_action(event, offset, action_index, &action))
       {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, action_index);
         return false;
       }
 
-      module_type = event->action_bytes[offset + 0U];
-      module_id = event->action_bytes[offset + 1U];
-      action_len = event->action_bytes[offset + 3U];
-
-      if ((uint16_t)(offset + SCHED_ACTION_HEADER_SIZE + action_len) > event->action_bytes_len)
+      if (action.module_type == MODULE_PUMP_PERISTALTIC)
       {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, action_index);
-        return false;
-      }
+        uint8_t target_slot;
+        uint8_t local_pump;
+        uint32_t control;
+        uint32_t speed_mV;
 
-      if (module_type == MODULE_PUMP_PERISTALTIC)
-      {
-        slot = (uint8_t)(module_id / PUMP_CARD_PUMPS_PER_CARD);
-        if (slot >= CARD_BUS_SLOT_COUNT)
+        if (!pump_bus_build_registers(action.module_id,
+                                      action.action_type,
+                                      action.payload,
+                                      action.action_len,
+                                      &target_slot,
+                                      &local_pump,
+                                      &control,
+                                      &speed_mV))
         {
-          pump_bus_set_error(PUMP_STATUS_BAD_INDEX, module_id);
           return false;
         }
 
-        required_mask |= (uint8_t)(1U << slot);
+        if (!pump_bus_write_queue_entry(target_slot,
+                                        event_index,
+                                        local_pump,
+                                        control,
+                                        speed_mV))
+        {
+          return false;
+        }
       }
 
-      offset = (uint16_t)(offset + SCHED_ACTION_HEADER_SIZE + action_len);
-    }
-
-    if (offset != event->action_bytes_len)
-    {
-      pump_bus_set_error(PUMP_STATUS_BAD_LEN, event->action_count);
-      return false;
+      offset = (uint16_t)(offset + ACTION_HEADER_SIZE + action.action_len);
     }
   }
 
-  *required_mask_out = required_mask;
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
-  return true;
-}
-
-static bool pump_bus_collect_event_actions(const ScheduleEvent *event,
-                                           PumpCardEvent per_slot_events[CARD_BUS_SLOT_COUNT],
-                                           uint8_t slot_used[CARD_BUS_SLOT_COUNT],
-                                           bool require_present_cards)
-{
-  uint16_t offset = 0U;
-  uint8_t action_index;
-  uint8_t seen_local_pumps[CARD_BUS_SLOT_COUNT];
-
-  memset(per_slot_events, 0, sizeof(PumpCardEvent) * CARD_BUS_SLOT_COUNT);
-  memset(slot_used, 0, CARD_BUS_SLOT_COUNT);
-  memset(seen_local_pumps, 0, sizeof(seen_local_pumps));
-
-  for (action_index = 0U; action_index < event->action_count; action_index++)
-  {
-    uint8_t module_type;
-    uint8_t module_id;
-    uint8_t action_type;
-    uint8_t action_len;
-
-    if ((uint16_t)(offset + SCHED_ACTION_HEADER_SIZE) > event->action_bytes_len)
-    {
-      pump_bus_set_error(PUMP_STATUS_BAD_LEN, action_index);
-      return false;
-    }
-
-    module_type = event->action_bytes[offset + 0U];
-    module_id = event->action_bytes[offset + 1U];
-    action_type = event->action_bytes[offset + 2U];
-    action_len = event->action_bytes[offset + 3U];
-
-    if ((uint16_t)(offset + SCHED_ACTION_HEADER_SIZE + action_len) > event->action_bytes_len)
-    {
-      pump_bus_set_error(PUMP_STATUS_BAD_LEN, action_index);
-      return false;
-    }
-
-    if (module_type == MODULE_PUMP_PERISTALTIC)
-    {
-      uint8_t slot;
-      uint8_t local_pump_id;
-      PumpCardEvent *slot_event;
-      PumpAction *slot_action;
-      const uint8_t *payload = &event->action_bytes[offset + SCHED_ACTION_HEADER_SIZE];
-
-      if ((action_type != PUMP_SET_STATE) || (action_len != SCHED_PUMP_PAYLOAD_SIZE))
-      {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, module_id);
-        return false;
-      }
-
-      slot = (uint8_t)(module_id / PUMP_CARD_PUMPS_PER_CARD);
-      local_pump_id = (uint8_t)(module_id % PUMP_CARD_PUMPS_PER_CARD);
-
-      if (slot >= CARD_BUS_SLOT_COUNT)
-      {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, module_id);
-        return false;
-      }
-
-      if (require_present_cards && !card_bus_is_slot_present(slot, CARD_TYPE_PUMP_PERISTALTIC))
-      {
-        pump_bus_set_error(PUMP_STATUS_HW_ERROR, module_id);
-        return false;
-      }
-
-      if ((seen_local_pumps[slot] & (uint8_t)(1U << local_pump_id)) != 0U)
-      {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, module_id);
-        return false;
-      }
-
-      seen_local_pumps[slot] |= (uint8_t)(1U << local_pump_id);
-      slot_event = &per_slot_events[slot];
-      if (slot_event->action_count >= PUMP_CARD_MAX_ACTIONS_PER_EVENT)
-      {
-        pump_bus_set_error(PUMP_STATUS_FULL, module_id);
-        return false;
-      }
-
-      slot_event->global_event_id = event->event_id;
-      slot_action = &slot_event->actions[slot_event->action_count];
-      slot_action->local_pump_id = local_pump_id;
-      slot_action->enable = payload[0];
-      slot_action->direction = payload[1];
-      slot_action->reserved = 0U;
-      slot_action->flow_ul_min = pump_bus_flow_nl_to_ul_min(read_u32_le(&payload[4]));
-
-      slot_event->action_count++;
-      slot_used[slot] = 1U;
-    }
-
-    offset = (uint16_t)(offset + SCHED_ACTION_HEADER_SIZE + action_len);
-  }
-
-  if (offset != event->action_bytes_len)
-  {
-    pump_bus_set_error(PUMP_STATUS_BAD_LEN, event->action_count);
-    return false;
-  }
-
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
+  pump_bus_set_error(STATUS_OK, 0U);
   return true;
 }
 
 void pump_bus_init(void)
 {
   memset(&g_pump_bus, 0, sizeof(g_pump_bus));
-  card_bus_init();
-}
-
-void pump_bus_discover(void)
-{
-  card_bus_discover_all();
-  pump_bus_set_error(card_bus_get_last_status(), card_bus_get_last_detail());
-}
-
-bool pump_bus_discover_required(const Schedule *schedule)
-{
-  uint8_t required_mask;
-
-  if (!pump_bus_collect_required_slots(schedule, &required_mask))
-  {
-    return false;
-  }
-
-  if (!card_bus_discover_type_slots(required_mask, CARD_TYPE_PUMP_PERISTALTIC, PUMP_BUS_DISCOVERY_PASSES))
-  {
-    pump_bus_set_error(PUMP_STATUS_HW_ERROR,
-                       (uint8_t)(card_bus_get_last_detail() * PUMP_CARD_PUMPS_PER_CARD));
-    return false;
-  }
-
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
-  return true;
 }
 
 bool pump_bus_validate_schedule(const Schedule *schedule)
 {
-  uint16_t event_index;
-  PumpCardEvent per_slot_events[CARD_BUS_SLOT_COUNT];
-  uint8_t slot_used[CARD_BUS_SLOT_COUNT];
+  uint16_t action_count;
+  uint8_t uses_pumps;
+  uint8_t required_mask;
+  uint8_t status;
 
-  if (schedule == 0)
+  g_pump_bus.required_slot_mask = 0U;
+  g_pump_bus.schedule_uses_pumps = 0U;
+  g_pump_bus.offloaded_schedule_prepared = 0U;
+  g_pump_bus.offloaded_schedule_active = 0U;
+  g_pump_bus.queued_action_count = 0U;
+
+  status = pump_bus_required_slots_mask(schedule, &required_mask, &action_count, &uses_pumps);
+  if (status != STATUS_OK)
   {
-    pump_bus_set_error(PUMP_STATUS_BAD_LEN, 0U);
+    pump_bus_set_error(status, g_pump_bus.last_detail);
     return false;
   }
 
-  for (event_index = 0U; event_index < schedule->event_count; event_index++)
+  g_pump_bus.required_slot_mask = required_mask;
+  g_pump_bus.schedule_uses_pumps = uses_pumps;
+  g_pump_bus.queued_action_count = action_count;
+  if (uses_pumps == 0U)
   {
-    if (!pump_bus_collect_event_actions(&schedule->events[event_index],
-                                        per_slot_events,
-                                        slot_used,
-                                        true))
-    {
-      return false;
-    }
-  }
-
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
-  return true;
-}
-
-bool pump_bus_distribute_schedule(const Schedule *schedule)
-{
-  uint8_t slot;
-  uint16_t event_index;
-  PumpCardEvent per_slot_events[CARD_BUS_SLOT_COUNT];
-  uint8_t slot_used[CARD_BUS_SLOT_COUNT];
-  uint8_t payload[PUMP_CARD_CMD_PAYLOAD_MAX];
-  uint16_t payload_len;
-
-  if (schedule == 0)
-  {
-    pump_bus_set_error(PUMP_STATUS_BAD_LEN, 0U);
-    return false;
-  }
-
-  pump_bus_reset_distribution_state();
-
-  for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
-  {
-    if (card_bus_is_slot_present(slot, CARD_TYPE_PUMP_PERISTALTIC)
-        && !pump_bus_send_simple_command(slot, CMD_CLEAR))
-    {
-      return false;
-    }
-  }
-
-  for (event_index = 0U; event_index < schedule->event_count; event_index++)
-  {
-    PumpExecMapEntry *map_entry = 0;
-
-    if (!pump_bus_collect_event_actions(&schedule->events[event_index],
-                                        per_slot_events,
-                                        slot_used,
-                                        true))
-    {
-      return false;
-    }
-
-    for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
-    {
-      if (slot_used[slot] == 0U)
-      {
-        continue;
-      }
-
-      per_slot_events[slot].local_event_index = g_pump_bus.next_local_event_index[slot];
-      if (!pump_card_build_load_event_payload(&per_slot_events[slot],
-                                              payload,
-                                              sizeof(payload),
-                                              &payload_len))
-      {
-        pump_bus_set_error(PUMP_STATUS_BAD_LEN, slot);
-        return false;
-      }
-
-      if (!card_bus_command(slot, CMD_LOAD_EVENT, payload, payload_len, 0))
-      {
-        pump_bus_set_error(card_bus_get_last_status(), card_bus_get_last_detail());
-        return false;
-      }
-
-      if (map_entry == 0)
-      {
-        if (g_pump_bus.exec_map_count >= MAX_EVENTS)
-        {
-          pump_bus_set_error(PUMP_STATUS_FULL, slot);
-          return false;
-        }
-
-        map_entry = &g_pump_bus.exec_map[g_pump_bus.exec_map_count++];
-        memset(map_entry, 0, sizeof(*map_entry));
-        map_entry->global_event_id = schedule->events[event_index].event_id;
-      }
-
-      if (map_entry->target_count >= CARD_BUS_SLOT_COUNT)
-      {
-        pump_bus_set_error(PUMP_STATUS_FULL, slot);
-        return false;
-      }
-
-      map_entry->targets[map_entry->target_count].card_slot = slot;
-      map_entry->targets[map_entry->target_count].local_event_index = per_slot_events[slot].local_event_index;
-      map_entry->target_count++;
-
-      g_pump_bus.next_local_event_index[slot]++;
-    }
-  }
-
-  for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
-  {
-    if (card_bus_is_slot_present(slot, CARD_TYPE_PUMP_PERISTALTIC)
-        && (g_pump_bus.next_local_event_index[slot] > 0U))
-    {
-      if (!pump_bus_send_simple_command(slot, CMD_ARM))
-      {
-        return false;
-      }
-    }
-  }
-
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
-  return true;
-}
-
-bool pump_bus_exec_event(uint32_t global_event_id)
-{
-  PumpExecMapEntry *map_entry;
-  uint8_t target_index;
-  uint8_t payload[PUMP_CARD_EXEC_PAYLOAD_SIZE];
-  uint16_t payload_len = 0U;
-
-  map_entry = pump_bus_find_exec_map(global_event_id);
-  if (map_entry == 0)
-  {
+    pump_bus_set_error(STATUS_OK, 0U);
     return true;
   }
 
-  for (target_index = 0U; target_index < map_entry->target_count; target_index++)
+  if (!card_bus_discover_type_slots(g_pump_bus.required_slot_mask,
+                                    CARD_TYPE_PUMP_PERISTALTIC,
+                                    PUMP_BUS_DISCOVERY_PASSES))
   {
-    pump_card_build_exec_event_payload(map_entry->targets[target_index].local_event_index,
-                                       global_event_id,
-                                       payload,
-                                       &payload_len);
+    pump_bus_set_error(card_bus_get_last_status(),
+                       (uint8_t)(card_bus_get_last_detail() * 8U));
+    return false;
+  }
 
-    if (!card_bus_command(map_entry->targets[target_index].card_slot,
-                          CMD_EXEC_EVENT,
-                          payload,
-                          payload_len,
-                          0))
+  pump_bus_set_error(STATUS_OK, 0U);
+  return true;
+}
+
+bool pump_bus_start_schedule(const Schedule *schedule)
+{
+  if (g_pump_bus.schedule_uses_pumps == 0U)
+  {
+    g_pump_bus.offloaded_schedule_prepared = 0U;
+    g_pump_bus.offloaded_schedule_active = 0U;
+    pump_bus_set_error(STATUS_OK, 0U);
+    return true;
+  }
+
+  if (!pump_bus_upload_schedule(schedule))
+  {
+    uint8_t slot;
+
+    for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
     {
-      pump_bus_set_error(card_bus_get_last_status(), card_bus_get_last_detail());
+      if ((g_pump_bus.required_slot_mask & (uint8_t)(1U << slot)) != 0U)
+      {
+        (void)pump_bus_clear_remote_queue(slot);
+      }
+    }
+
+    g_pump_bus.offloaded_schedule_prepared = 0U;
+    g_pump_bus.offloaded_schedule_active = 0U;
+    return false;
+  }
+
+  g_pump_bus.offloaded_schedule_prepared = 1U;
+  g_pump_bus.offloaded_schedule_active = 0U;
+  pump_bus_set_error(STATUS_OK, 0U);
+  return true;
+}
+
+bool pump_bus_arm_schedule(void)
+{
+  uint8_t slot;
+
+  if (g_pump_bus.schedule_uses_pumps == 0U)
+  {
+    pump_bus_set_error(STATUS_OK, 0U);
+    return true;
+  }
+
+  if (g_pump_bus.offloaded_schedule_prepared == 0U)
+  {
+    pump_bus_set_error(STATUS_BAD_LEN, 0U);
+    return false;
+  }
+
+  for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
+  {
+    if ((g_pump_bus.required_slot_mask & (uint8_t)(1U << slot)) == 0U)
+    {
+      continue;
+    }
+
+    if (!pump_bus_write_control(slot, PUMP_CARD_CONTROL_RUN))
+    {
       return false;
     }
   }
 
-  pump_bus_set_error(PUMP_STATUS_OK, 0U);
+  g_pump_bus.offloaded_schedule_active = 1U;
+  pump_bus_set_error(STATUS_OK, 0U);
   return true;
 }
 
@@ -453,13 +464,24 @@ void pump_bus_stop_all(void)
 {
   uint8_t slot;
 
+  g_pump_bus.offloaded_schedule_prepared = 0U;
+  g_pump_bus.offloaded_schedule_active = 0U;
+  g_pump_bus.schedule_uses_pumps = 0U;
+  g_pump_bus.queued_action_count = 0U;
+  g_pump_bus.required_slot_mask = 0U;
+
   for (slot = 0U; slot < CARD_BUS_SLOT_COUNT; slot++)
   {
-    if (card_bus_is_slot_present(slot, CARD_TYPE_PUMP_PERISTALTIC))
+    if (!card_bus_is_slot_present(slot, CARD_TYPE_PUMP_PERISTALTIC))
     {
-      (void)pump_bus_send_simple_command(slot, CMD_STOP);
+      continue;
     }
+
+    (void)pump_bus_write_control(slot, 0U);
+    (void)pump_bus_clear_remote_queue(slot);
   }
+
+  pump_bus_set_error(STATUS_OK, 0U);
 }
 
 uint8_t pump_bus_get_last_status(void)

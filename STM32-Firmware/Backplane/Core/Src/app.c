@@ -1,8 +1,8 @@
 #include "app.h"
 
 #include "backplane_card_bus.h"
+#include "backplane_fpga_bus.h"
 #include "backplane_pump_bus.h"
-#include "calibration.h"
 #include "main.h"
 #include "protocol.h"
 #include "scheduler.h"
@@ -42,14 +42,11 @@ typedef struct
   uint8_t pending_tx_valid;
   uint16_t pending_tx_len;
   uint8_t pending_tx_frame[PROTOCOL_MAX_FRAME_SIZE];
-  uint8_t start_pending;
   /* One deferred event is enough because the host uses a request/response flow. */
   AppEvent deferred_event;
 } AppContext;
 
 static AppContext g_app;
-
-static uint8_t app_execute_start_schedule(uint8_t *detail_out);
 
 static uint64_t app_get_time_us_placeholder(void)
 {
@@ -58,55 +55,31 @@ static uint64_t app_get_time_us_placeholder(void)
 
 static void app_handle_scheduler_runtime(void)
 {
-  const ScheduleEvent *event;
-
-  while (scheduler_get_ready_event(app_get_time_us_placeholder(), &event))
-  {
-    if (!pump_bus_exec_event(event->event_id))
-    {
-      pump_bus_stop_all();
-      scheduler_set_error(ERR_BAD_EVENT);
-      return;
-    }
-  }
-
-  if (scheduler_is_run_complete())
-  {
-    pump_bus_stop_all();
-    scheduler_stop();
-  }
-}
-
-static void app_handle_pending_start(void)
-{
-  uint8_t error_code;
-
-  /* Start distribution after the ACK has been handed off to USB. */
-  if ((g_app.start_pending == 0U) || (g_app.pending_tx_valid != 0U))
+  if (scheduler_get_state() != SCHED_RUNNING)
   {
     return;
   }
 
-  g_app.start_pending = 0U;
-  error_code = app_execute_start_schedule(0);
-  if (error_code != ACK_OK)
+  if (fpga_bus_is_schedule_complete())
   {
     pump_bus_stop_all();
-    scheduler_set_error(error_code);
+    fpga_bus_stop_all();
+    scheduler_stop();
   }
 }
 
-static uint8_t app_execute_start_schedule(uint8_t *detail_out)
+static uint8_t app_start_schedule(uint8_t *detail_out)
 {
   uint8_t error_code;
 
-  if (!pump_bus_discover_required(scheduler_get_schedule()))
+  if (detail_out != 0)
   {
-    if (detail_out != 0)
-    {
-      *detail_out = pump_bus_get_last_detail();
-    }
-    return ERR_BAD_MODULE;
+    *detail_out = 0U;
+  }
+
+  if (scheduler_get_state() == SCHED_RUNNING)
+  {
+    return ERR_BUSY_RUNNING;
   }
 
   if (!pump_bus_validate_schedule(scheduler_get_schedule()))
@@ -118,38 +91,71 @@ static uint8_t app_execute_start_schedule(uint8_t *detail_out)
     return ERR_BAD_MODULE;
   }
 
-  if (!pump_bus_distribute_schedule(scheduler_get_schedule()))
+  if (!fpga_bus_validate_schedule(scheduler_get_schedule()))
+  {
+    if (detail_out != 0)
+    {
+      *detail_out = fpga_bus_get_last_detail();
+    }
+    return ERR_BAD_MODULE;
+  }
+
+  if (!pump_bus_start_schedule(scheduler_get_schedule()))
   {
     if (detail_out != 0)
     {
       *detail_out = pump_bus_get_last_detail();
     }
-    return ERR_BAD_EVENT;
+    pump_bus_stop_all();
+    return ERR_BAD_MODULE;
+  }
+
+  if (!fpga_bus_start_schedule(scheduler_get_schedule()))
+  {
+    if (detail_out != 0)
+    {
+      *detail_out = fpga_bus_get_last_detail();
+    }
+    pump_bus_stop_all();
+    fpga_bus_stop_all();
+    return ERR_BAD_MODULE;
   }
 
   error_code = scheduler_start(detail_out);
   if (error_code == ACK_OK)
   {
-    scheduler_start_run(app_get_time_us_placeholder());
+    if (!pump_bus_arm_schedule())
+    {
+      if (detail_out != 0)
+      {
+        *detail_out = pump_bus_get_last_detail();
+      }
+      pump_bus_stop_all();
+      fpga_bus_stop_all();
+      scheduler_stop();
+      return ERR_BAD_MODULE;
+    }
+
+    if (!fpga_bus_arm_schedule())
+    {
+      if (detail_out != 0)
+      {
+        *detail_out = fpga_bus_get_last_detail();
+      }
+      pump_bus_stop_all();
+      fpga_bus_stop_all();
+      scheduler_stop();
+      return ERR_BAD_MODULE;
+    }
+
+  }
+  else
+  {
+    pump_bus_stop_all();
+    fpga_bus_stop_all();
   }
 
   return error_code;
-}
-
-static uint8_t app_request_start_schedule(uint8_t *detail_out)
-{
-  if (detail_out != 0)
-  {
-    *detail_out = 0U;
-  }
-
-  if ((scheduler_get_state() == SCHED_RUNNING) || (g_app.start_pending != 0U))
-  {
-    return ERR_BUSY_RUNNING;
-  }
-
-  g_app.start_pending = 1U;
-  return ACK_OK;
 }
 
 static uint8_t app_try_tx(const uint8_t *data, uint16_t len)
@@ -188,7 +194,7 @@ static uint8_t app_protocol_tx(const uint8_t *data, uint16_t len, void *context)
     return USBD_OK;
   }
 
-  /* TODO: Add a real transmit queue if higher response throughput is needed. */
+  /* The host protocol is request/response, so one pending frame is intentional. */
   return tx_result;
 }
 
@@ -309,7 +315,6 @@ static void app_handle_packet(const ProtocolPacket *packet)
       break;
 
     case MSG_CLEAR_SCHEDULE:
-      g_app.start_pending = 0U;
       error_code = scheduler_clear(&detail);
       break;
 
@@ -318,12 +323,12 @@ static void app_handle_packet(const ProtocolPacket *packet)
       break;
 
     case MSG_START_SCHEDULE:
-      error_code = app_request_start_schedule(&detail);
+      error_code = app_start_schedule(&detail);
       break;
 
     case MSG_STOP_SCHEDULE:
-      g_app.start_pending = 0U;
       pump_bus_stop_all();
+      fpga_bus_stop_all();
       scheduler_stop();
       break;
 
@@ -331,23 +336,9 @@ static void app_handle_packet(const ProtocolPacket *packet)
       break;
 
     case MSG_GET_CARD_INVENTORY:
-      if ((scheduler_get_state() != SCHED_RUNNING) && (g_app.start_pending == 0U))
+      if (scheduler_get_state() != SCHED_RUNNING)
       {
         card_bus_discover_all();
-      }
-      break;
-
-    case MSG_CAL_RUN_PUMP:
-    case MSG_CAL_SET_COEFF:
-      if ((scheduler_get_state() == SCHED_RUNNING) || (g_app.start_pending != 0U))
-      {
-        error_code = ERR_BUSY_RUNNING;
-      }
-      else
-      {
-        error_code = (packet->msg_type == MSG_CAL_RUN_PUMP)
-                   ? calibration_run_pump_from_payload(packet->payload, packet->payload_len, &detail)
-                   : calibration_set_coeff_from_payload(packet->payload, packet->payload_len, &detail);
       }
       break;
 
@@ -406,9 +397,10 @@ void app_init(void)
 {
   memset(&g_app, 0, sizeof(g_app));
   scheduler_init();
-  calibration_init();
+  card_bus_init();
   pump_bus_init();
-  pump_bus_discover();
+  fpga_bus_init();
+  card_bus_discover_all();
   protocol_parser_init(&g_app.parser, app_enqueue_packet, app_enqueue_protocol_error, 0);
 }
 
@@ -424,7 +416,6 @@ void app_poll(void)
   }
 
   app_process_events();
-  app_handle_pending_start();
   app_handle_scheduler_runtime();
 }
 

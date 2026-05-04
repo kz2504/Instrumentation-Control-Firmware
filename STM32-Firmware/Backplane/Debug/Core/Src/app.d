@@ -1,7 +1,7 @@
 Core/Src/app.o: ../Core/Src/app.c ../Core/Inc/app.h \
- ../Core/Inc/backplane_card_bus.h ../Core/Inc/pump_card_protocol.h \
- ../Core/Inc/backplane_pump_bus.h ../Core/Inc/scheduler.h \
- ../Core/Inc/calibration.h ../Core/Inc/main.h \
+ ../Core/Inc/backplane_card_bus.h ../Core/Inc/card_registers.h \
+ ../Core/Inc/backplane_fpga_bus.h ../Core/Inc/scheduler.h \
+ ../Core/Inc/backplane_pump_bus.h ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
@@ -42,10 +42,10 @@ Core/Src/app.o: ../Core/Src/app.c ../Core/Inc/app.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h
 ../Core/Inc/app.h:
 ../Core/Inc/backplane_card_bus.h:
-../Core/Inc/pump_card_protocol.h:
-../Core/Inc/backplane_pump_bus.h:
+../Core/Inc/card_registers.h:
+../Core/Inc/backplane_fpga_bus.h:
 ../Core/Inc/scheduler.h:
-../Core/Inc/calibration.h:
+../Core/Inc/backplane_pump_bus.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:

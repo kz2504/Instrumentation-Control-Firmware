@@ -7,16 +7,10 @@ Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/or5g00/data/orc5glib.ngl'...
 
 Running DRC...
 
-WARNING - synthesis: logical net 'spi_cs_n' has no load.
-WARNING - synthesis: input pad net 'spi_cs_n' has no legal load.
-WARNING - synthesis: logical net 'spi_mosi' has no load.
-WARNING - synthesis: input pad net 'spi_mosi' has no legal load.
-WARNING - synthesis: logical net 'spi_sck' has no load.
-WARNING - synthesis: input pad net 'spi_sck' has no legal load.
-WARNING - synthesis: DRC complete with 6 warnings.
+DRC complete with no errors or warnings
 
 Design Results:
-    110 blocks expanded
+  10212 blocks expanded
 completed the first expansion
 All blocks are expanded and NGD expansion is successful.
 Writing NGD file TimingCard_impl1.ngd.

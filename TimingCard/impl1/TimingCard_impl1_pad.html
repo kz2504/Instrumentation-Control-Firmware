@@ -14,7 +14,7 @@ Performance Grade:      6
 PACKAGE:          TQFP144
 Package Status:                     Final          Version 1.39
 
-Tue Apr 28 01:15:11 2026
+Mon May 04 01:49:34 2026
 
 Pinout by Port Name:
 +--------------+----------+--------------+-------+-----------+-----------+--------------------------------------+
@@ -23,12 +23,13 @@ Pinout by Port Name:
 | clk          | 127/0    | LVCMOS33_IN  | PT18B |           |           | PULL:DOWN CLAMP:ON HYSTERESIS:SMALL  |
 | fram_scl     | 126/0    | LVCMOS33_OUT | PT22C |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | fram_sda     | 125/0    | LVCMOS33_OUT | PT22D |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
+| irq          | 63/2     | LVCMOS33_OUT | PB31D |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | oe           | 111/0    | LVCMOS33_OUT | PT35B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[0]   | 107/1    | LVCMOS33_OUT | PR2A  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[10]  | 98/1     | LVCMOS33_OUT | PR7A  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[11]  | 97/1     | LVCMOS33_OUT | PR7B  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[12]  | 81/1     | LVCMOS33_OUT | PR18B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
-| out_3v3[13]  | 82/1     | LVCMOS33_OUT | PR18A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
+| out_3v3[13]  | 52/2     | LVCMOS33_OUT | PB18A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[14]  | 96/1     | LVCMOS33_OUT | PR9A  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[15]  | 84/1     | LVCMOS33_OUT | PR17A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_3v3[1]   | 106/1    | LVCMOS33_OUT | PR2B  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
@@ -42,7 +43,7 @@ Pinout by Port Name:
 | out_3v3[9]   | 99/1     | LVCMOS33_OUT | PR5B  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[0]    | 89/1     | LVCMOS33_OUT | PR15A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[10]   | 83/1     | LVCMOS33_OUT | PR17B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
-| out_5v[11]   | 21/4     | LVCMOS33_OUT | PL15A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
+| out_5v[11]   | 82/1     | LVCMOS33_OUT | PR18A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[12]   | 74/1     | LVCMOS33_OUT | PR24A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[13]   | 73/1     | LVCMOS33_OUT | PR24B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[14]   | 55/2     | LVCMOS33_OUT | PB23A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
@@ -56,7 +57,11 @@ Pinout by Port Name:
 | out_5v[7]    | 75/1     | LVCMOS33_OUT | PR23B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[8]    | 94/1     | LVCMOS33_OUT | PR11A |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | out_5v[9]    | 93/1     | LVCMOS33_OUT | PR11B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
+| spi_cs_n     | 61/2     | LVCMOS33_IN  | PB31A |           |           | PULL:DOWN CLAMP:ON HYSTERESIS:SMALL  |
 | spi_miso     | 45/2     | LVCMOS33_OUT | PB12B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
+| spi_mosi     | 71/2     | LVCMOS33_IN  | PB38B |           |           | PULL:DOWN CLAMP:ON HYSTERESIS:SMALL  |
+| spi_sck      | 44/2     | LVCMOS33_IN  | PB12A |           |           | PULL:DOWN CLAMP:ON HYSTERESIS:SMALL  |
+| sync         | 67/2     | LVCMOS33_OUT | PB35B |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | testpoint[0] | 1/5      | LVCMOS33_OUT | PL3A  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | testpoint[1] | 6/5      | LVCMOS33_OUT | PL6B  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
 | testpoint[2] | 10/5     | LVCMOS33_OUT | PL8B  |           |           | DRIVE:8mA PULL:DOWN SLEW:SLOW        |
@@ -107,7 +112,7 @@ Vccio by Bank:
 | 17/4     |     unused, PULL:DOWN |            |              | PL11B |                |           |           |
 | 19/4     | testpoint[4]          | LOCATED    | LVCMOS33_OUT | PL12A | PCLKT4_0       |           |           |
 | 20/4     |     unused, PULL:DOWN |            |              | PL12B | PCLKC4_0       |           |           |
-| 21/4     | out_5v[11]            |            | LVCMOS33_OUT | PL15A |                |           |           |
+| 21/4     |     unused, PULL:DOWN |            |              | PL15A |                |           |           |
 | 22/4     |     unused, PULL:DOWN |            |              | PL15B |                |           |           |
 | 23/4     | testpoint[5]          | LOCATED    | LVCMOS33_OUT | PL17A |                |           |           |
 | 24/4     |     unused, PULL:DOWN |            |              | PL17B |                |           |           |
@@ -126,13 +131,13 @@ Vccio by Bank:
 | 41/2     |     unused, PULL:DOWN |            |              | PB6B  |                |           |           |
 | 42/2     |     unused, PULL:DOWN |            |              | PB9A  |                |           |           |
 | 43/2     |     unused, PULL:DOWN |            |              | PB9B  |                |           |           |
-| 44/2     |     unused, PULL:DOWN |            |              | PB12A | MCLK/CCLK      |           |           |
+| 44/2     | spi_sck               | LOCATED    | LVCMOS33_IN  | PB12A | MCLK/CCLK      |           |           |
 | 45/2     | spi_miso              | LOCATED    | LVCMOS33_OUT | PB12B | SO/SPISO       |           |           |
 | 47/2     |     unused, PULL:DOWN |            |              | PB13A |                |           |           |
 | 48/2     |     unused, PULL:DOWN |            |              | PB13B |                |           |           |
 | 49/2     |     unused, PULL:DOWN |            |              | PB16A | PCLKT2_0       |           |           |
 | 50/2     |     unused, PULL:DOWN |            |              | PB16B | PCLKC2_0       |           |           |
-| 52/2     |     unused, PULL:DOWN |            |              | PB18A |                |           |           |
+| 52/2     | out_3v3[13]           | LOCATED    | LVCMOS33_OUT | PB18A |                |           |           |
 | 54/2     |     unused, PULL:DOWN |            |              | PB18B |                |           |           |
 | 55/2     | out_5v[14]            | LOCATED    | LVCMOS33_OUT | PB23A | PCLKT2_1       |           |           |
 | 56/2     |     unused, PULL:DOWN |            |              | PB23B | PCLKC2_1       |           |           |
@@ -140,15 +145,15 @@ Vccio by Bank:
 | 58/2     |     unused, PULL:DOWN |            |              | PB26B |                |           |           |
 | 59/2     |     unused, PULL:DOWN |            |              | PB29A |                |           |           |
 | 60/2     |     unused, PULL:DOWN |            |              | PB29B |                |           |           |
-| 61/2     |     unused, PULL:DOWN |            |              | PB31A |                |           |           |
+| 61/2     | spi_cs_n              | LOCATED    | LVCMOS33_IN  | PB31A |                |           |           |
 | 62/2     |     unused, PULL:DOWN |            |              | PB31B |                |           |           |
-| 63/2     |     unused, PULL:DOWN |            |              | PB31D |                |           |           |
+| 63/2     | irq                   | LOCATED    | LVCMOS33_OUT | PB31D |                |           |           |
 | 65/2     |     unused, PULL:DOWN |            |              | PB35A |                |           |           |
-| 67/2     |     unused, PULL:DOWN |            |              | PB35B |                |           |           |
+| 67/2     | sync                  | LOCATED    | LVCMOS33_OUT | PB35B |                |           |           |
 | 68/2     |     unused, PULL:DOWN |            |              | PB37A |                |           |           |
 | 69/2     |     unused, PULL:DOWN |            |              | PB37B |                |           |           |
 | 70/2     |     unused, PULL:DOWN |            |              | PB38A | SN             |           |           |
-| 71/2     |     unused, PULL:DOWN |            |              | PB38B | SI/SISPI       |           |           |
+| 71/2     | spi_mosi              | LOCATED    | LVCMOS33_IN  | PB38B | SI/SISPI       |           |           |
 | 73/1     | out_5v[13]            | LOCATED    | LVCMOS33_OUT | PR24B | DQ1            |           |           |
 | 74/1     | out_5v[12]            | LOCATED    | LVCMOS33_OUT | PR24A | DQ1            |           |           |
 | 75/1     | out_5v[7]             | LOCATED    | LVCMOS33_OUT | PR23B | DQ1            |           |           |
@@ -156,7 +161,7 @@ Vccio by Bank:
 | 77/1     | out_5v[5]             | LOCATED    | LVCMOS33_OUT | PR21B | DQ1            |           |           |
 | 78/1     | out_5v[4]             | LOCATED    | LVCMOS33_OUT | PR21A | DQ1            |           |           |
 | 81/1     | out_3v3[12]           | LOCATED    | LVCMOS33_OUT | PR18B | DQ1            |           |           |
-| 82/1     | out_3v3[13]           | LOCATED    | LVCMOS33_OUT | PR18A | DQ1            |           |           |
+| 82/1     | out_5v[11]            | LOCATED    | LVCMOS33_OUT | PR18A | DQ1            |           |           |
 | 83/1     | out_5v[10]            | LOCATED    | LVCMOS33_OUT | PR17B | DQ1            |           |           |
 | 84/1     | out_3v3[15]           | LOCATED    | LVCMOS33_OUT | PR17A | DQ1            |           |           |
 | 85/1     | out_5v[3]             | LOCATED    | LVCMOS33_OUT | PR16B | DQS1N          |           |           |
@@ -448,12 +453,13 @@ to Help Users Lock Down ALL the Pins Easily (by Simply Copy & Paste):
 LOCATE  COMP  "clk"  SITE  "127";
 LOCATE  COMP  "fram_scl"  SITE  "126";
 LOCATE  COMP  "fram_sda"  SITE  "125";
+LOCATE  COMP  "irq"  SITE  "63";
 LOCATE  COMP  "oe"  SITE  "111";
 LOCATE  COMP  "out_3v3[0]"  SITE  "107";
 LOCATE  COMP  "out_3v3[10]"  SITE  "98";
 LOCATE  COMP  "out_3v3[11]"  SITE  "97";
 LOCATE  COMP  "out_3v3[12]"  SITE  "81";
-LOCATE  COMP  "out_3v3[13]"  SITE  "82";
+LOCATE  COMP  "out_3v3[13]"  SITE  "52";
 LOCATE  COMP  "out_3v3[14]"  SITE  "96";
 LOCATE  COMP  "out_3v3[15]"  SITE  "84";
 LOCATE  COMP  "out_3v3[1]"  SITE  "106";
@@ -467,7 +473,7 @@ LOCATE  COMP  "out_3v3[8]"  SITE  "91";
 LOCATE  COMP  "out_3v3[9]"  SITE  "99";
 LOCATE  COMP  "out_5v[0]"  SITE  "89";
 LOCATE  COMP  "out_5v[10]"  SITE  "83";
-LOCATE  COMP  "out_5v[11]"  SITE  "21";
+LOCATE  COMP  "out_5v[11]"  SITE  "82";
 LOCATE  COMP  "out_5v[12]"  SITE  "74";
 LOCATE  COMP  "out_5v[13]"  SITE  "73";
 LOCATE  COMP  "out_5v[14]"  SITE  "55";
@@ -481,7 +487,11 @@ LOCATE  COMP  "out_5v[6]"  SITE  "76";
 LOCATE  COMP  "out_5v[7]"  SITE  "75";
 LOCATE  COMP  "out_5v[8]"  SITE  "94";
 LOCATE  COMP  "out_5v[9]"  SITE  "93";
+LOCATE  COMP  "spi_cs_n"  SITE  "61";
 LOCATE  COMP  "spi_miso"  SITE  "45";
+LOCATE  COMP  "spi_mosi"  SITE  "71";
+LOCATE  COMP  "spi_sck"  SITE  "44";
+LOCATE  COMP  "sync"  SITE  "67";
 LOCATE  COMP  "testpoint[0]"  SITE  "1";
 LOCATE  COMP  "testpoint[1]"  SITE  "6";
 LOCATE  COMP  "testpoint[2]"  SITE  "10";
@@ -502,7 +512,7 @@ Copyright (c) 1995 AT&T Corp.   All rights reserved.
 Copyright (c) 1995-2001 Lucent Technologies Inc.  All rights reserved.
 Copyright (c) 2001 Agere Systems   All rights reserved.
 Copyright (c) 2002-2024 Lattice Semiconductor Corporation,  All rights reserved.
-Tue Apr 28 01:15:11 2026
+Mon May 04 01:49:35 2026
 
 
 

@@ -1,0 +1,10 @@
+../Core/Src/spi_frame.c:5:17:spi_frame_crc16_update	24	static
+../Core/Src/spi_frame.c:25:10:spi_frame_crc16_ccitt_false	24	static
+../Core/Src/spi_frame.c:38:10:spi_frame_read_u16_le	16	static
+../Core/Src/spi_frame.c:43:10:spi_frame_read_u32_le	16	static
+../Core/Src/spi_frame.c:51:6:spi_frame_write_u16_le	16	static
+../Core/Src/spi_frame.c:57:6:spi_frame_write_u32_le	16	static
+../Core/Src/spi_frame.c:65:6:spi_frame_build_command	32	static
+../Core/Src/spi_frame.c:98:9:spi_frame_parse_command	32	static
+../Core/Src/spi_frame.c:141:6:spi_frame_build_response	24	static
+../Core/Src/spi_frame.c:176:9:spi_frame_parse_response	32	static

@@ -32,6 +32,10 @@ MODULE_PUMP_PERISTALTIC = 0x01
 MODULE_GPIO_FPGA = 0x02
 PUMP_SET_STATE = 0x01
 GPIO_SET_WAVEFORM = 0x01
+FPGA_PWM_CLOCK_HZ = 10_000_000
+FPGA_PWM_FREQ_SCALE = 1_000
+FPGA_PWM_DUTY_SCALE = 1_000_000
+UINT32_MAX = 0xFFFFFFFF
 
 
 def crc16_ccitt_false(data: bytes) -> int:
@@ -122,8 +126,39 @@ def pump_action(module_id: int, enable: int, direction: int, flow_nl_min: int) -
     return build_action(MODULE_PUMP_PERISTALTIC, module_id, PUMP_SET_STATE, payload)
 
 
-def gpio_waveform_action(module_id: int, polarity: int, idle_state: int, frequency_milli_hz: int, duty_ppm: int, num_periods: int) -> bytes:
-    payload = struct.pack("<BBHIII", polarity, idle_state, 0, frequency_milli_hz, duty_ppm, num_periods)
+def gpio_phase_step_from_millihz(frequency_millihz: int) -> int:
+    if frequency_millihz < 0:
+        raise ValueError("frequency_millihz must be non-negative")
+
+    denominator = FPGA_PWM_CLOCK_HZ * FPGA_PWM_FREQ_SCALE
+    phase_step = ((frequency_millihz << 32) + (denominator // 2)) // denominator
+    if phase_step > UINT32_MAX:
+        raise ValueError("frequency_millihz is too high for a 32-bit FPGA phase step")
+
+    return phase_step
+
+
+def gpio_duty_threshold_from_ppm(duty_ppm: int) -> int:
+    if duty_ppm < 0 or duty_ppm > FPGA_PWM_DUTY_SCALE:
+        raise ValueError("duty_ppm must be in the range 0..1_000_000")
+
+    if duty_ppm == FPGA_PWM_DUTY_SCALE:
+        return UINT32_MAX
+
+    return (duty_ppm << 32) // FPGA_PWM_DUTY_SCALE
+
+
+def gpio_waveform_action(
+    module_id: int,
+    polarity: int,
+    idle_state: int,
+    frequency_millihz: int,
+    duty_ppm: int,
+    num_periods: int,
+) -> bytes:
+    phase_step = gpio_phase_step_from_millihz(frequency_millihz)
+    duty_threshold = gpio_duty_threshold_from_ppm(duty_ppm)
+    payload = struct.pack("<BBHIII", polarity, idle_state, 0, phase_step, duty_threshold, num_periods)
     return build_action(MODULE_GPIO_FPGA, module_id, GPIO_SET_WAVEFORM, payload)
 
 
@@ -186,7 +221,7 @@ def main() -> int:
 
         pump_event = build_upload_event(
             event_id=1,
-            timestamp_us=1000,
+            timestamp_us=500_000,
             actions=[pump_action(module_id=0, enable=1, direction=0, flow_nl_min=500000)],
         )
         send_and_print(port, reader, MSG_UPLOAD_EVENT, seq, pump_event)
@@ -194,8 +229,17 @@ def main() -> int:
 
         gpio_event = build_upload_event(
             event_id=2,
-            timestamp_us=2000,
-            actions=[gpio_waveform_action(module_id=0, polarity=0, idle_state=0, frequency_milli_hz=1000, duty_ppm=500000, num_periods=10)],
+            timestamp_us=1_500_000,
+            actions=[
+                gpio_waveform_action(
+                    module_id=0,
+                    polarity=0,
+                    idle_state=0,
+                    frequency_millihz=1000,
+                    duty_ppm=500000,
+                    num_periods=10,
+                )
+            ],
         )
         send_and_print(port, reader, MSG_UPLOAD_EVENT, seq, gpio_event)
         seq += 1

@@ -1,0 +1,66 @@
+#ifndef __FPGA_TIMING_REGS_H__
+#define __FPGA_TIMING_REGS_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
+#include "card_registers.h"
+
+#define FPGA_CARD_MAX_LOCAL_EVENTS      48U
+
+#define FPGA_EVENT_REG_TIME_LO           0x0200U
+#define FPGA_EVENT_REG_TIME_HI           0x0204U
+#define FPGA_EVENT_REG_PUSH              0x0208U
+#define FPGA_EVENT_REG_COUNT             0x020CU
+#define FPGA_EVENT_REG_STATUS            0x0210U
+#define FPGA_EVENT_REG_LAST_TIME_LO      0x0214U
+#define FPGA_EVENT_REG_LAST_TIME_HI      0x0218U
+
+#define FPGA_ACTION_REG_EVENT_INDEX      0x0220U
+#define FPGA_ACTION_REG_META             0x0224U
+#define FPGA_ACTION_REG_PHASE_STEP       0x0228U
+#define FPGA_ACTION_REG_DUTY_THRESHOLD   0x022CU
+#define FPGA_ACTION_REG_PUSH             0x0230U
+#define FPGA_ACTION_REG_COUNT            0x0234U
+#define FPGA_ACTION_REG_STATUS           0x0238U
+#define FPGA_ACTION_REG_LAST_EVENT_INDEX 0x023CU
+
+#define FPGA_CHANNEL_MODE_STOP           0x00U
+#define FPGA_CHANNEL_MODE_FORCE_LOW      0x01U
+#define FPGA_CHANNEL_MODE_FORCE_HIGH     0x02U
+#define FPGA_CHANNEL_MODE_PWM            0x03U
+
+#define FPGA_CHANNEL_FLAG_POLARITY_INV   0x04U
+#define FPGA_CHANNEL_FLAG_IDLE_HIGH      0x08U
+
+#define FPGA_CARD_CONTROL_RUN            0x00000001UL
+#define FPGA_CARD_CONTROL_CLEAR_QUEUE    0x00000002UL
+
+#define FPGA_CARD_STATUS_RUNNING         0x00000001UL
+#define FPGA_CARD_STATUS_DONE            0x00000002UL
+#define FPGA_CARD_STATUS_QUEUE_READY     0x00000004UL
+#define FPGA_CARD_STATUS_SYNC_STATE      0x00000008UL
+
+#define FPGA_EVENT_STATUS_FULL           0x00000001UL
+#define FPGA_EVENT_STATUS_PUSH_SEEN      0x00000002UL
+#define FPGA_EVENT_STATUS_RUNNING        0x00000004UL
+#define FPGA_EVENT_STATUS_DONE           0x00000008UL
+
+#define FPGA_ACTION_STATUS_FULL          0x00000001UL
+#define FPGA_ACTION_STATUS_PUSH_SEEN     0x00000002UL
+#define FPGA_ACTION_STATUS_RUNNING       0x00000004UL
+#define FPGA_ACTION_STATUS_DONE          0x00000008UL
+
+#define FPGA_ACTION_META(channel_id, control) \
+  ((((uint32_t)(control) & 0xFFU) << 8) | ((uint32_t)(channel_id) & 0xFFU))
+#define FPGA_ACTION_META_CHANNEL(meta)   ((uint8_t)((meta) & 0xFFU))
+#define FPGA_ACTION_META_CONTROL(meta)   ((uint8_t)(((meta) >> 8) & 0xFFU))
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __FPGA_TIMING_REGS_H__ */

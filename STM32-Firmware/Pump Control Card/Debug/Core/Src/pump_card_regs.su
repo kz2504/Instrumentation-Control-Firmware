@@ -1,0 +1,12 @@
+../Core/Src/pump_card_regs.c:45:13:pump_card_set_enable_bit	24	static
+../Core/Src/pump_card_regs.c:59:13:pump_card_set_direction_bit	24	static
+../Core/Src/pump_card_regs.c:73:13:pump_card_apply_outputs	32	static
+../Core/Src/pump_card_regs.c:104:13:pump_card_set_output_state	24	static
+../Core/Src/pump_card_regs.c:117:13:pump_card_outputs_all_off	16	static
+../Core/Src/pump_card_regs.c:134:13:pump_card_reset_queue_state	8	static
+../Core/Src/pump_card_regs.c:150:13:pump_card_queue_write_allowed	16	static
+../Core/Src/pump_card_regs.c:161:13:pump_card_validate_staged_entry	24	static
+../Core/Src/pump_card_regs.c:181:6:pump_card_regs_init	8	static
+../Core/Src/pump_card_regs.c:187:6:pump_card_regs_read	24	static
+../Core/Src/pump_card_regs.c:288:6:pump_card_regs_write	24	static
+../Core/Src/pump_card_regs.c:383:6:pump_card_regs_on_sync_edge	24	static

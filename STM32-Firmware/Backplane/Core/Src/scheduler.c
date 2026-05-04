@@ -15,8 +15,6 @@ typedef struct
   uint32_t last_event_id;
   uint8_t last_error;
   uint8_t state;
-  uint16_t next_run_event_index;
-  uint64_t run_start_time_us;
 } SchedulerStore;
 
 static SchedulerStore g_scheduler;
@@ -94,15 +92,6 @@ static uint8_t scheduler_validate_gpio_action(uint8_t module_id,
       }
 
       if ((payload[0] > 1U) || (payload[1] > 1U))
-      {
-        if (detail != 0)
-        {
-          *detail = action_type;
-        }
-        return ERR_BAD_ACTION;
-      }
-
-      if (read_u32_le(&payload[8]) > 1000000UL)
       {
         if (detail != 0)
         {
@@ -228,8 +217,6 @@ uint8_t scheduler_clear(uint8_t *detail)
   g_scheduler.last_event_id = 0U;
   g_scheduler.last_error = 0U;
   g_scheduler.state = SCHED_IDLE;
-  g_scheduler.next_run_event_index = 0U;
-  g_scheduler.run_start_time_us = 0U;
   return ACK_OK;
 }
 
@@ -268,6 +255,20 @@ uint8_t scheduler_upload_event(const uint8_t *payload, uint16_t payload_len, uin
   event_id = read_u32_le(&payload[0]);
   timestamp_us = read_u64_le(&payload[4]);
   action_count = payload[12];
+
+  if (g_scheduler.schedule.event_count != 0U)
+  {
+    const ScheduleEvent *last_event = &g_scheduler.schedule.events[g_scheduler.schedule.event_count - 1U];
+    if ((timestamp_us <= last_event->timestamp_us) ||
+        ((timestamp_us - last_event->timestamp_us) < SCHEDULE_MIN_EVENT_SPACING_US))
+    {
+      if (detail != 0)
+      {
+        *detail = (uint8_t)g_scheduler.schedule.event_count;
+      }
+      return ERR_BAD_EVENT;
+    }
+  }
 
   if (action_count == 0U)
   {
@@ -334,23 +335,17 @@ uint8_t scheduler_start(uint8_t *detail)
     return ERR_BUSY_RUNNING;
   }
 
-  g_scheduler.next_run_event_index = 0U;
-  g_scheduler.run_start_time_us = 0U;
+  if (g_scheduler.schedule.event_count == 0U)
+  {
+    return ERR_BAD_EVENT;
+  }
+
   g_scheduler.state = SCHED_RUNNING;
   return ACK_OK;
 }
 
-void scheduler_start_run(uint64_t start_time_us)
-{
-  g_scheduler.run_start_time_us = start_time_us;
-  g_scheduler.next_run_event_index = 0U;
-}
-
 void scheduler_stop(void)
 {
-  g_scheduler.next_run_event_index = 0U;
-  g_scheduler.run_start_time_us = 0U;
-
   if (g_scheduler.schedule.event_count == 0U)
   {
     g_scheduler.state = SCHED_IDLE;
@@ -359,55 +354,6 @@ void scheduler_stop(void)
   {
     g_scheduler.state = SCHED_STOPPED;
   }
-}
-
-bool scheduler_get_ready_event(uint64_t current_time_us, const ScheduleEvent **event_out)
-{
-  const ScheduleEvent *event;
-  uint64_t elapsed_time_us;
-
-  if (event_out == 0)
-  {
-    return false;
-  }
-
-  *event_out = 0;
-
-  if (g_scheduler.state != SCHED_RUNNING)
-  {
-    return false;
-  }
-
-  if (g_scheduler.next_run_event_index >= g_scheduler.schedule.event_count)
-  {
-    return false;
-  }
-
-  if (current_time_us < g_scheduler.run_start_time_us)
-  {
-    return false;
-  }
-
-  elapsed_time_us = current_time_us - g_scheduler.run_start_time_us;
-  event = &g_scheduler.schedule.events[g_scheduler.next_run_event_index];
-  if (elapsed_time_us < event->timestamp_us)
-  {
-    return false;
-  }
-
-  *event_out = event;
-  g_scheduler.next_run_event_index++;
-  return true;
-}
-
-bool scheduler_is_run_complete(void)
-{
-  if (g_scheduler.state != SCHED_RUNNING)
-  {
-    return false;
-  }
-
-  return (g_scheduler.next_run_event_index >= g_scheduler.schedule.event_count);
 }
 
 void scheduler_get_status(SchedulerStatus *status, uint64_t current_time_us)

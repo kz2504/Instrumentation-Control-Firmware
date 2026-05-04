@@ -6,10 +6,34 @@
         <Source name="top.v" type="Verilog" type_short="Verilog">
             <Options top_module="top"/>
         </Source>
+        <Source name="timingcard_spi_decoder.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_schedule_store.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_action_queue.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_event_queue.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_gpio_bank.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_pwm_channel.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="timingcard_spi_write_cdc.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
         <Source name="impl1/impl1.xcf" type="Programming Project File" type_short="Programming">
             <Options/>
         </Source>
         <Source name="TimingCard.lpf" type="Logic Preference" type_short="LPF">
+            <Options/>
+        </Source>
+        <Source name="TimingCard.sdc" type="Synplify Design Constraints File" type_short="SDC">
             <Options/>
         </Source>
     </Implementation>

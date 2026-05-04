@@ -5,7 +5,7 @@ Copyright (c) 1995 AT&T Corp.   All rights reserved.
 Copyright (c) 1995-2001 Lucent Technologies Inc.  All rights reserved.
 Copyright (c) 2001 Agere Systems   All rights reserved.
 Copyright (c) 2002-2024 Lattice Semiconductor Corporation,  All rights reserved.
-Tue Apr 28 01:14:47 2026
+Mon May 04 01:44:31 2026
 
 
 Command Line:  synthesis -f TimingCard_impl1_lattice.synproj -gui -msgset C:/Users/Frank/Documents/Embedded Firmware/TimingCard/promote.xml 
@@ -66,6 +66,13 @@ The -syn option is FALSE.
 -p C:/Users/Frank/Documents/Embedded Firmware/TimingCard/impl1 (searchpath added)
 -p C:/Users/Frank/Documents/Embedded Firmware/TimingCard (searchpath added)
 Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/top.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_spi_decoder.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_schedule_store.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_action_queue.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_event_queue.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_gpio_bank.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_pwm_channel.v
+Verilog design file = C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_spi_write_cdc.v
 NGD file = TimingCard_impl1.ngd
 -sdc option: SDC file input not used.
 -lpf option: Output file option is ON.
@@ -77,9 +84,26 @@ Analyzing Verilog file C:/lscc/diamond/3.14/ispfpga/userware/NT/SYNTHESIS_HEADER
 Compile design.
 Compile Design Begin
 Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/top.v. VERI-1482
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/top.v(1): analyzing included file c:/users/frank/documents/embedded firmware/timingcard/fpga_timing_regs.vh. VERI-1328
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_spi_decoder.v. VERI-1482
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_schedule_store.v. VERI-1482
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_schedule_store.v(1): analyzing included file c:/users/frank/documents/embedded firmware/timingcard/fpga_timing_regs.vh. VERI-1328
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_action_queue.v. VERI-1482
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_event_queue.v. VERI-1482
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_gpio_bank.v. VERI-1482
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_pwm_channel.v. VERI-1482
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_pwm_channel.v(1): analyzing included file c:/users/frank/documents/embedded firmware/timingcard/fpga_timing_regs.vh. VERI-1328
+Analyzing Verilog file c:/users/frank/documents/embedded firmware/timingcard/timingcard_spi_write_cdc.v. VERI-1482
 Analyzing Verilog file C:/lscc/diamond/3.14/ispfpga/userware/NT/SYNTHESIS_HEADERS/machxo2.v. VERI-1482
 Top module name (Verilog): top
-INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/top.v(1): compiling module top. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/top.v(3): compiling module top. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_schedule_store.v(3): compiling module timingcard_schedule_store. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_spi_write_cdc.v(1): compiling module timingcard_spi_write_cdc. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_event_queue.v(1): compiling module timingcard_event_queue. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_action_queue.v(1): compiling module timingcard_action_queue. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_gpio_bank.v(1): compiling module timingcard_gpio_bank. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_pwm_channel.v(3): compiling module timingcard_pwm_channel. VERI-1018
+INFO - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_spi_decoder.v(1): compiling module timingcard_spi_decoder. VERI-1018
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00a/data/xo2alib.ngl'...
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00/data/xo2clib.ngl'...
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/mg5g00/data/mg5glib.ngl'...
@@ -87,17 +111,16 @@ Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/or5g00/data/orc5glib.ngl'...
 Loading device for application map from file 'xo2c7000.nph' in environment: C:/lscc/diamond/3.14/ispfpga.
 Package Status:                     Final          Version 1.39.
 Top-level module name = top.
-WARNING - synthesis: I/O Port spi_cs_n 's net has no driver and is unused.
-WARNING - synthesis: I/O Port spi_mosi 's net has no driver and is unused.
-WARNING - synthesis: I/O Port spi_sck 's net has no driver and is unused.
-######## Converting I/O port fram_sda to output.
 
 
 
-WARNING - synthesis: I/O Port spi_cs_n 's net has no driver and is unused.
-WARNING - synthesis: I/O Port spi_mosi 's net has no driver and is unused.
-WARNING - synthesis: I/O Port spi_sck 's net has no driver and is unused.
-GSR will not be inferred because no asynchronous signal was found in the netlist.
+######## Found 2 RTL RAMs in the design.
+######## Mapping RTL RAM \u_store/u_action_queue/action_entry to 4 EBR blocks in PSEUDO_DUAL_PORT Mode
+
+######## Mapping RTL RAM \u_store/u_event_queue/event_delta_ticks to 3 EBR blocks in PSEUDO_DUAL_PORT Mode
+
+WARNING - synthesis: c:/users/frank/documents/embedded firmware/timingcard/timingcard_event_queue.v(32): Register \u_store/u_event_queue/event_delta_ticks_4338 is stuck at Zero. VDB-5013
+GSR instance connected to net \u_spi_decoder/spi_cs_n_N_5763.
 Applying 200.000000 MHz constraint to all clocks
 
 WARNING - synthesis: No user .sdc file.
@@ -106,25 +129,27 @@ Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00a/data/xo2alib.ngl'...
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/xo2c00/data/xo2clib.ngl'...
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/mg5g00/data/mg5glib.ngl'...
 Loading NGL library 'C:/lscc/diamond/3.14/ispfpga/or5g00/data/orc5glib.ngl'...
-WARNING - synthesis: logical net 'spi_cs_n' has no load.
-WARNING - synthesis: input pad net 'spi_cs_n' has no legal load.
-WARNING - synthesis: logical net 'spi_mosi' has no load.
-WARNING - synthesis: input pad net 'spi_mosi' has no legal load.
-WARNING - synthesis: logical net 'spi_sck' has no load.
-WARNING - synthesis: input pad net 'spi_sck' has no legal load.
-WARNING - synthesis: DRC complete with 6 warnings.
 All blocks are expanded and NGD expansion is successful.
 Writing NGD file TimingCard_impl1.ngd.
 
 ################### Begin Area Report (top)######################
-Number of register bits => 29 of 7209 (0 % )
-CCU2D => 15
-FD1S3AX => 29
+Number of register bits => 5421 of 7209 (75 % )
+CCU2D => 956
+FD1P3AX => 3518
+FD1P3AY => 81
+FD1P3IX => 1555
+FD1P3JX => 1
+FD1S3AX => 259
+FD1S3IX => 7
 GSR => 1
-IB => 1
-LUT4 => 16
-OB => 43
-OBZ => 2
+IB => 4
+INV => 1
+L6MUX21 => 19
+LUT4 => 3555
+MUX21 => 2
+OB => 47
+PDPW8KC => 7
+PFUMX => 196
 ################### End Area Report ##################
 
 ################### Begin BlackBox Report ######################
@@ -133,23 +158,34 @@ TSALL => 1
 
 ################### Begin Clock Report ######################
 Clock Nets
-Number of Clocks: 1
-  Net : clk_c, loads : 29
+Number of Clocks: 2
+  Net : clk_c, loads : 5146
+  Net : spi_sck_c, loads : 273
 Clock Enable Nets
-Number of Clock Enables: 0
-Top 0 highest fanout Clock Enables:
+Number of Clock Enables: 265
+Top 10 highest fanout Clock Enables:
+  Net : u_store/u_write_cdc/cmd_addr_15__N_411, loads : 50
+  Net : u_spi_decoder/spi_sck_c_enable_195, loads : 49
+  Net : u_store/clk_c_enable_2636, loads : 48
+  Net : spi_sck_c_enable_246, loads : 48
+  Net : u_store/u_action_queue/clk_c_enable_2890, loads : 33
+  Net : u_store/u_gpio_bank/gen_pwm_channels_8..u_pwm_channel/clk_c_enable_4705, loads : 32
+  Net : u_store/u_gpio_bank/gen_pwm_channels_5..u_pwm_channel/clk_c_enable_4700, loads : 32
+  Net : u_store/u_gpio_bank/gen_pwm_channels_4..u_pwm_channel/clk_c_enable_4702, loads : 32
+  Net : u_store/u_gpio_bank/gen_pwm_channels_24..u_pwm_channel/clk_c_enable_658, loads : 32
+  Net : u_store/u_gpio_bank/gen_pwm_channels_23..u_pwm_channel/clk_c_enable_657, loads : 32
 Highest fanout non-clock nets
 Top 10 highest fanout non-clock nets:
-  Net : testpoint_0, loads : 4
-  Net : testpoint_1, loads : 4
-  Net : testpoint_2, loads : 4
-  Net : testpoint_3, loads : 4
-  Net : testpoint_4, loads : 4
-  Net : testpoint_5, loads : 4
-  Net : testpoint_6, loads : 4
-  Net : testpoint_c, loads : 3
-  Net : out_5v_c_7, loads : 3
-  Net : out_5v_c_6, loads : 3
+  Net : u_store/u_action_queue/n37958, loads : 413
+  Net : u_store/u_action_queue/n26834, loads : 412
+  Net : u_store/u_action_queue/n37945, loads : 412
+  Net : u_store/u_gpio_bank/n37935, loads : 361
+  Net : u_store/u_action_queue/n37933, loads : 203
+  Net : u_store/u_action_queue/n37934, loads : 203
+  Net : u_store/u_action_queue/n37896, loads : 203
+  Net : u_store/u_action_queue/n37930, loads : 203
+  Net : u_store/u_action_queue/n37929, loads : 202
+  Net : u_store/u_action_queue/n37932, loads : 202
 ################### End Clock Report ##################
 
 Timing Report Summary
@@ -159,16 +195,19 @@ Constraint                              |   Constraint|       Actual|Levels
 --------------------------------------------------------------------------------
                                         |             |             |
 create_clock -period 5.000000 -name     |             |             |
-clk0 [get_nets clk_c]                   |  200.000 MHz|  201.248 MHz|    16  
+clk1 [get_nets spi_sck_c]               |  200.000 MHz|   11.933 MHz|    34 *
+                                        |             |             |
+create_clock -period 5.000000 -name     |             |             |
+clk0 [get_nets clk_c]                   |  200.000 MHz|   61.607 MHz|    32 *
                                         |             |             |
 --------------------------------------------------------------------------------
 
 
-All constraints were met.
+2 constraints not met.
 
 
-Peak Memory Usage: 63.848  MB
+Peak Memory Usage: 182.652  MB
 
 --------------------------------------------------------------
-Elapsed CPU time for LSE flow : 0.125  secs
+Elapsed CPU time for LSE flow : 9.344  secs
 --------------------------------------------------------------

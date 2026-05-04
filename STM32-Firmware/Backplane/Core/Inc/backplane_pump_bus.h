@@ -11,11 +11,9 @@ extern "C" {
 #include "scheduler.h"
 
 void pump_bus_init(void);
-void pump_bus_discover(void);
-bool pump_bus_discover_required(const Schedule *schedule);
 bool pump_bus_validate_schedule(const Schedule *schedule);
-bool pump_bus_distribute_schedule(const Schedule *schedule);
-bool pump_bus_exec_event(uint32_t global_event_id);
+bool pump_bus_start_schedule(const Schedule *schedule);
+bool pump_bus_arm_schedule(void);
 void pump_bus_stop_all(void);
 
 uint8_t pump_bus_get_last_status(void);

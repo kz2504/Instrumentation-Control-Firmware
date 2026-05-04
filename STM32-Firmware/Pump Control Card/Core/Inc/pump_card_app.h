@@ -7,6 +7,7 @@ extern "C" {
 
 void pump_card_app_init(void);
 void pump_card_app_poll(void);
+void pump_card_app_on_sync_edge(void);
 
 #ifdef __cplusplus
 }

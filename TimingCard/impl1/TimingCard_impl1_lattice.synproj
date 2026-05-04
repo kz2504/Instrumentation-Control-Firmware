@@ -33,6 +33,13 @@
 -lpf 1
 -p "C:/Users/Frank/Documents/Embedded Firmware/TimingCard"
 -ver "C:/Users/Frank/Documents/Embedded Firmware/TimingCard/top.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_spi_decoder.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_schedule_store.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_action_queue.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_event_queue.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_gpio_bank.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_pwm_channel.v"
+"C:/Users/Frank/Documents/Embedded Firmware/TimingCard/timingcard_spi_write_cdc.v"
 -top top
 
 
