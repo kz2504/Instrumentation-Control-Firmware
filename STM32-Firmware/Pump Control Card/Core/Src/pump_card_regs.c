@@ -2,6 +2,7 @@
 
 #include "DAC.h"
 #include "card_registers.h"
+#include "main.h"
 #include "shiftreg.h"
 #include "spi_frame.h"
 
@@ -11,6 +12,7 @@
 #define PUMP_CARD_DAC_AVDD_V      5.0f
 #define PUMP_CARD_DAC_ZERO_V      0.0f
 #define PUMP_CARD_MAX_VOLTAGE_MV  5000U
+#define PUMP_CARD_DAC_SETTLE_US   10U
 
 typedef struct
 {
@@ -42,6 +44,33 @@ typedef struct
 
 static PumpCardRegsContext g_pump_regs;
 
+static void pump_card_delay_us(uint32_t delay_us)
+{
+  uint32_t ticks;
+  uint32_t start;
+
+  if (delay_us == 0U)
+  {
+    return;
+  }
+
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+  ticks = (SystemCoreClock / 1000000U) * delay_us;
+  start = DWT->CYCCNT;
+
+  while ((uint32_t)(DWT->CYCCNT - start) < ticks)
+  {
+    __NOP();
+  }
+}
+
+static void pump_card_wait_for_dac_settle(void)
+{
+  pump_card_delay_us(PUMP_CARD_DAC_SETTLE_US);
+}
+
 static void pump_card_set_enable_bit(uint8_t local_pump_id, uint8_t enable)
 {
   uint8_t mask = (uint8_t)(1U << local_pump_id);
@@ -70,7 +99,7 @@ static void pump_card_set_direction_bit(uint8_t local_pump_id, uint8_t direction
   }
 }
 
-static void pump_card_apply_outputs(uint8_t index)
+static void pump_card_apply_outputs(uint8_t index, uint8_t was_enabled)
 {
   uint32_t speed_mV = g_pump_regs.outputs[index].speed_mV;
   uint32_t control = g_pump_regs.outputs[index].control;
@@ -88,6 +117,10 @@ static void pump_card_apply_outputs(uint8_t index)
     pump_card_set_direction_bit(index, direction);
     shiftByteDIR(g_pump_regs.dir_bits);
     writeDAC(index, PUMP_CARD_DAC_AVDD_V, (float)speed_mV / 1000.0f, 0U);
+    if (was_enabled == 0U)
+    {
+      pump_card_wait_for_dac_settle();
+    }
     pump_card_set_enable_bit(index, 1U);
     shiftByteEN(g_pump_regs.en_bits);
   }
@@ -103,6 +136,8 @@ static void pump_card_apply_outputs(uint8_t index)
 
 static void pump_card_set_output_state(uint8_t index, uint32_t control, uint32_t speed_mV)
 {
+  uint8_t was_enabled = (uint8_t)(g_pump_regs.outputs[index].control & PUMP_CONTROL_ENABLE);
+
   g_pump_regs.outputs[index].control = (control & (PUMP_CONTROL_ENABLE | PUMP_CONTROL_DIRECTION));
   g_pump_regs.outputs[index].speed_mV = speed_mV;
 
@@ -111,7 +146,7 @@ static void pump_card_set_output_state(uint8_t index, uint32_t control, uint32_t
     g_pump_regs.outputs[index].speed_mV = 0U;
   }
 
-  pump_card_apply_outputs(index);
+  pump_card_apply_outputs(index, was_enabled);
 }
 
 static void pump_card_outputs_all_off(void)
